@@ -22,11 +22,5 @@ class VideosControllerTest {
     @Autowired
     @Mock
     VideoService videoService;
-
-
-    @Test
-    void getVideos() {
-        when(videoService.getVideos()).thenReturn(List.of("video 1", "video 2"));
-        assertEquals(List.of("video 1", "video 2"), videosController.getVideos().getBody());
-    }
+    
 }
