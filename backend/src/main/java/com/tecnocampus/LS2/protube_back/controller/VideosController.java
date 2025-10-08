@@ -2,6 +2,7 @@ package com.tecnocampus.LS2.protube_back.controller;
 
 import com.tecnocampus.LS2.protube_back.services.VideoService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,10 +22,13 @@ public class VideosController {
     @Autowired
     VideoService videoService;
 
+    @Autowired
+    private Environment env;
+
     @GetMapping("")
     public ResponseEntity<List<Map<String, String>>> getVideos() {
-        String videoDir = System.getenv("ENV_PROTUBE_STORE_DIR");
-        if (videoDir == null || videoDir.isEmpty()) {
+        String videoDir = env.getProperty("pro_tube.store.dir", "");
+        if (videoDir == null || videoDir.isBlank()) {
             return ResponseEntity.badRequest().body(List.of());
         }
         File folder = new File(videoDir);
