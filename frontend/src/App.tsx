@@ -27,14 +27,15 @@ function ContentApp() {
         </div>
       );
 
-    case 'success':
+    case 'success': {
       // convertir el JSON en un array de valores
-      //const myarray = Object.values(value || {});
+      const myarray = Object.values(value || {});
+
       return (
         <>
           <strong>Videos available:</strong>
           <ul>
-            {[].map((item, index) => (
+            {myarray.map((item, index) => (
               <li key={index}>
                 {item.id ? item.id : JSON.stringify(item)} {/* por si no hay "title", mostrar algo */}
               </li>
@@ -42,6 +43,7 @@ function ContentApp() {
           </ul>
         </>
       );
+    }
   }
 
   return <div>Idle...</div>;
