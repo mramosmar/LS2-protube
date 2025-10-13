@@ -1,4 +1,6 @@
 import { Video } from '../App';
+import VideoThumbnailHybrid from './VideoThumbnailHybrid';
+import ThumbnailErrorBoundary from './ThumbnailErrorBoundary';
 import './VideoGrid.css';
 
 interface VideoGridProps {
@@ -49,28 +51,12 @@ const VideoGrid = ({ videos, onVideoSelect }: VideoGridProps) => {
   return (
     <div className="video-grid">
       {videos.map((video) => (
-        <div
-          key={video.id}
-          className="video-card"
-          onClick={() => onVideoSelect(video)}
-        >
-          <div className="video-thumbnail">
-            <div className="thumbnail-placeholder">
-              <span className="video-id">{video.id}</span>
-              {video.meta?.categories && video.meta.categories.length > 0 && (
-                <div className="video-category">
-                  {video.meta.categories[0]}
-                </div>
-              )}
-            </div>
-            <div className="video-duration">
-              {formatDuration(video.duration)}
-            </div>
-          </div>
+        <div key={video.id} className="video-card" onClick={() => onVideoSelect(video)}>
+          <ThumbnailErrorBoundary video={video} size="medium" showCategory={true}>
+            <VideoThumbnailHybrid video={video} size="medium" showCategory={true} />
+          </ThumbnailErrorBoundary>
           <div className="video-info">
-            <div className="video-avatar">
-              {video.user.charAt(0).toUpperCase()}
-            </div>
+            <div className="video-avatar">{video.user.charAt(0).toUpperCase()}</div>
             <div className="video-details">
               <h3 className="video-title">{video.title}</h3>
               <p className="video-user">{video.user}</p>

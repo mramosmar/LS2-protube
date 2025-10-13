@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Video } from '../App';
+import VideoThumbnailHybrid from './VideoThumbnailHybrid';
 import './VideoPlayer.css';
 
 interface VideoPlayerProps {
@@ -58,16 +59,17 @@ const VideoPlayer = ({ video, onBack, relatedVideos, onVideoSelect }: VideoPlaye
                 </button>
 
                 <div className="video-player">
-                    <div className="video-placeholder">
-                        <div className="play-button">
-                            <svg viewBox="0 0 24 24" className="play-icon">
-                                <path d="M8 5v14l11-7z" />
-                            </svg>
-                        </div>
-                        <div className="video-id-overlay">{video.id}</div>
-                        <div className="video-duration-overlay">
-                            {formatDuration(video.duration)}
-                        </div>
+                    <div className="video-player-wrapper">
+                        <video
+                            controls
+                            width="100%"
+                            height="auto"
+                            src={`../store/${video.id}.mp4`}
+                            poster={`../store/${video.id}.webp`}
+                            className="video-element"
+                        >
+                            Tu navegador no soporta la reproducción de video.
+                        </video>
                     </div>
                 </div>
 
@@ -193,10 +195,12 @@ const VideoPlayer = ({ video, onBack, relatedVideos, onVideoSelect }: VideoPlaye
                             onClick={() => onVideoSelect(relatedVideo)}
                         >
                             <div className="related-thumbnail">
-                                <span className="related-video-id">{relatedVideo.id}</span>
-                                <div className="related-duration">
-                                    {formatDuration(relatedVideo.duration)}
-                                </div>
+                                <VideoThumbnailHybrid
+                                    video={relatedVideo}
+                                    size="small"
+                                    showCategory={false}
+                                    useRealImages={true}
+                                />
                             </div>
                             <div className="related-info">
                                 <h4 className="related-title">{relatedVideo.title}</h4>
