@@ -1,37 +1,112 @@
 import './App.css';
+import { useState, useMemo } from 'react';
 import { useAllVideos } from './useAllVideos';
+import VideoPlayer from './components/VideoPlayer';
+import Header from './components/Header';
+import VideoGrid from './components/VideoGrid';
 
-interface Video {
+export interface Video {
     id: number;
     title: string;
     user: string;
     duration: number;
     width: number;
     height: number;
+    meta?: {
+        description: string;
+        categories: string[];
+        tags: string[];
+        comments?: Array<{
+            text: string;
+            author: string;
+        }>;
+    };
 }
 
 function App() {
+    const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [selectedCategory, setSelectedCategory] = useState<string>('all');
+    const { loading, message, value: videos } = useAllVideos();
+
+    // Get unique categories from videos
+    const categories = useMemo(() => {
+        if (!videos) return [];
+        const allCategories = videos.flatMap(video => video.meta?.categories || []);
+        return ['all', ...new Set(allCategories)];
+    }, [videos]);
+
+    // Filter videos based on search and category
+    const filteredVideos = useMemo(() => {
+        if (!videos) return [];
+
+        return videos.filter(video => {
+            const matchesSearch = searchTerm === '' ||
+                video.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                video.user.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                video.meta?.tags?.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
+
+            const matchesCategory = selectedCategory === 'all' ||
+                video.meta?.categories?.includes(selectedCategory);
+
+            return matchesSearch && matchesCategory;
+        });
+    }, [videos, searchTerm, selectedCategory]);
+
+    const handleVideoSelect = (video: Video) => {
+        setSelectedVideo(video);
+    };
+
+    const handleBackToGrid = () => {
+        setSelectedVideo(null);
+    };
+
     return (
         <div className="App">
-            <header className="App-header">
-                <div className="logo-container">
-                    <img src="/protube-logo-removebg-preview.png" className="App-logo" alt="logo" />
-                    <h1 className="app-title">ProTube</h1>
-                </div>
-            </header>
+            <Header
+                searchTerm={searchTerm}
+                onSearchChange={setSearchTerm}
+                categories={categories}
+                selectedCategory={selectedCategory}
+                onCategoryChange={setSelectedCategory}
+                onLogoClick={handleBackToGrid}
+            />
             <main className="main-content">
-                <ContentApp />
+                {selectedVideo ? (
+                    <VideoPlayer
+                        video={selectedVideo}
+                        onBack={handleBackToGrid}
+                        relatedVideos={videos?.filter(v => v.id !== selectedVideo.id).slice(0, 10) || []}
+                        onVideoSelect={handleVideoSelect}
+                    />
+                ) : (
+                    <ContentApp
+                        loading={loading}
+                        message={message}
+                        videos={filteredVideos}
+                        onVideoSelect={handleVideoSelect}
+                        searchTerm={searchTerm}
+                        selectedCategory={selectedCategory}
+                    />
+                )}
             </main>
         </div>
     );
 }
 
-function ContentApp() {
-    const { loading, message, value } = useAllVideos();
+interface ContentAppProps {
+    loading: 'loading' | 'success' | 'error' | 'idle';
+    message: string;
+    videos: Video[];
+    onVideoSelect: (video: Video) => void;
+    searchTerm: string;
+    selectedCategory: string;
+}
 
+function ContentApp({ loading, message, videos, onVideoSelect, searchTerm, selectedCategory }: ContentAppProps) {
     switch (loading) {
         case 'loading':
-            return <div className="loading">Loading...</div>;
+            return <div className="loading">Cargando videos...</div>;
 
         case 'error':
             return (
@@ -42,32 +117,24 @@ function ContentApp() {
             );
 
         case 'success':
-            const videos = value || [];
+            if (videos.length === 0 && (searchTerm || selectedCategory !== 'all')) {
+                return (
+                    <div className="no-results">
+                        <h3>No se encontraron videos</h3>
+                        <p>Intenta con otros términos de búsqueda o selecciona una categoría diferente.</p>
+                    </div>
+                );
+            }
 
             return (
-                <div className="video-grid">
-                    {videos.map((video) => (
-                        <div key={video.id} className="video-card">
-                            <div className="video-thumbnail">
-                                <div className="thumbnail-placeholder">
-                                    <span className="video-id">{video.id}</span>
-                                </div>
-                                <div className="video-duration">
-                                    {formatDuration(video.duration)}
-                                </div>
-                            </div>
-                            <div className="video-info">
-                                <h3 className="video-title">{video.title}</h3>
-                                <p className="video-user">{video.user}</p>
-                                <p className="video-subtitle">ProTube · reproducción directa</p>
-                            </div>
-                        </div>
-                    ))}
-                </div>
+                <VideoGrid
+                    videos={videos}
+                    onVideoSelect={onVideoSelect}
+                />
             );
     }
 
-    return <div>Idle...</div>;
+    return <div>Esperando...</div>;
 }
 
 // Función para formatear la duración en minutos:segundos

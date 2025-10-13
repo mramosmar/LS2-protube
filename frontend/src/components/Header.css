@@ -1,0 +1,215 @@
+.app-header {
+    background-color: #212121;
+    padding: 0 24px;
+    border-bottom: 1px solid #303030;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 56px;
+}
+
+.header-left,
+.header-center,
+.header-right {
+    display: flex;
+    align-items: center;
+}
+
+.header-left {
+    flex: 0 0 auto;
+}
+
+.header-center {
+    flex: 1;
+    max-width: 640px;
+    margin: 0 40px;
+}
+
+.header-right {
+    flex: 0 0 auto;
+}
+
+.logo-container {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 8px;
+    transition: background-color 0.2s;
+}
+
+.logo-container:hover {
+    background-color: #303030;
+}
+
+.app-logo {
+    height: 32px;
+    width: auto;
+}
+
+.app-title {
+    font-size: 20px;
+    font-weight: 400;
+    margin: 0;
+    color: white;
+}
+
+.search-form {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+
+.search-container {
+    display: flex;
+    width: 100%;
+    max-width: 540px;
+    height: 40px;
+    position: relative;
+}
+
+.search-input {
+    flex: 1;
+    background-color: #121212;
+    border: 1px solid #303030;
+    border-right: none;
+    border-radius: 20px 0 0 20px;
+    padding: 0 16px;
+    color: white;
+    font-size: 16px;
+    outline: none;
+}
+
+.search-input:focus {
+    border-color: #1976d2;
+    box-shadow: 0 0 0 1px #1976d2;
+}
+
+.search-input::placeholder {
+    color: #aaa;
+}
+
+.search-button {
+    width: 65px;
+    background-color: #303030;
+    border: 1px solid #303030;
+    border-radius: 0 20px 20px 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.search-button:hover {
+    background-color: #404040;
+}
+
+.search-icon {
+    width: 20px;
+    height: 20px;
+    fill: #aaa;
+}
+
+.category-selector {
+    position: relative;
+}
+
+.category-button {
+    background-color: #303030;
+    border: none;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    transition: background-color 0.2s;
+    white-space: nowrap;
+}
+
+.category-button:hover {
+    background-color: #404040;
+}
+
+.dropdown-icon {
+    width: 16px;
+    height: 16px;
+    fill: white;
+    transition: transform 0.2s;
+}
+
+.category-button:hover .dropdown-icon {
+    transform: rotate(180deg);
+}
+
+.category-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background-color: #2d2d2d;
+    border: 1px solid #404040;
+    border-radius: 8px;
+    padding: 8px 0;
+    margin-top: 4px;
+    min-width: 200px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    z-index: 1000;
+}
+
+.category-option {
+    width: 100%;
+    background: none;
+    border: none;
+    color: white;
+    padding: 8px 16px;
+    text-align: left;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s;
+    white-space: nowrap;
+}
+
+.category-option:hover {
+    background-color: #404040;
+}
+
+.category-option.active {
+    background-color: #1976d2;
+    color: white;
+}
+
+.category-option.active:hover {
+    background-color: #1565c0;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .app-header {
+        padding: 0 16px;
+        flex-wrap: wrap;
+        height: auto;
+        padding-top: 8px;
+        padding-bottom: 8px;
+    }
+
+    .header-center {
+        order: 3;
+        width: 100%;
+        margin: 8px 0 0 0;
+    }
+
+    .header-right {
+        order: 2;
+    }
+
+    .app-title {
+        display: none;
+    }
+}
