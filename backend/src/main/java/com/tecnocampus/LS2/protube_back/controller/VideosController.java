@@ -1,15 +1,16 @@
 package com.tecnocampus.LS2.protube_back.controller;
 
 import com.tecnocampus.LS2.protube_back.services.VideoService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -25,60 +26,36 @@ public class VideosController {
     @Autowired
     private Environment env;
 
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
     @GetMapping("")
-    public ResponseEntity<List<Map<String, String>>> getVideos() {
-        String videoDir = env.getProperty("pro_tube.store.dir", "");
-        if (videoDir == null || videoDir.isBlank()) {
-            return ResponseEntity.badRequest().body(List.of());
-        }
+    public ResponseEntity<List<Map<String, Object>>> getVideos() {
+        String videoDir = env.getProperty("pro_tube.store.dir", "store");
         File folder = new File(videoDir);
         if (!folder.exists() || !folder.isDirectory()) {
             return ResponseEntity.badRequest().body(List.of());
         }
-        File[] files = folder.listFiles();
+
+        File[] files = folder.listFiles((dir, name) -> name.endsWith(".json"));
         if (files == null) {
-            return ResponseEntity.badRequest().body(List.of());
+            return ResponseEntity.ok().body(List.of());
         }
-        // Agrupar archivos por nombre base
-        List<Map<String, String>> videos = Arrays.stream(files)
-                .filter(File::isFile)
-                .collect(Collectors.groupingBy(file -> {
-                    String name = file.getName();
-                    int dotIndex = name.lastIndexOf('.');
-                    return (dotIndex == -1) ? name : name.substring(0, dotIndex);
-                }))
-                .entrySet()
-                .stream()
-                .map(entry -> {
-                    String baseName = entry.getKey();
-                    List<File> groupedFiles = entry.getValue();
 
-                    String mp4 = groupedFiles.stream()
-                            .filter(file -> file.getName().endsWith(".mp4"))
-                            .map(File::getName)
-                            .findFirst()
-                            .orElse("");
-
-                    String webp = groupedFiles.stream()
-                            .filter(file -> file.getName().endsWith(".webp"))
-                            .map(File::getName)
-                            .findFirst()
-                            .orElse("");
-
-                    String json = groupedFiles.stream()
-                            .filter(file -> file.getName().endsWith(".json"))
-                            .map(File::getName)
-                            .findFirst()
-                            .orElse("");
-
-                    return Map.of(
-                            "id", baseName,
-                            "video", mp4,
-                            "thumbnail", webp,
-                            "metadata", json
-                    );
-                })
+        List<Map<String, Object>> videos = Arrays.stream(files)
+                .map(this::readVideoMetadata)
+                .filter(video -> video != null)
                 .collect(Collectors.toList());
+
         return ResponseEntity.ok().body(videos);
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> readVideoMetadata(File jsonFile) {
+        try {
+            return objectMapper.readValue(jsonFile, Map.class);
+        } catch (IOException e) {
+            System.err.println("Error reading video metadata from " + jsonFile.getName() + ": " + e.getMessage());
+            return null;
+        }
     }
 }
