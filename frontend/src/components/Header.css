@@ -42,6 +42,20 @@
     transition: background-color 0.2s;
 }
 
+.owner-avatar {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(45deg, #1976d2, #42a5f5);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
 .logo-container:hover {
     background-color: #303030;
 }
@@ -132,6 +146,7 @@
     font-size: 14px;
     transition: background-color 0.2s;
     white-space: nowrap;
+    margin: 10px;
 }
 
 .category-button:hover {

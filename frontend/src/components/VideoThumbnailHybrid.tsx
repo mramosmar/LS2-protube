@@ -17,11 +17,7 @@ interface VideoThumbnailHybridProps {
   showCategory?: boolean;
 }
 
-const VideoThumbnailHybrid = ({
-  video,
-  size = 'medium',
-  showCategory = true,
-}: VideoThumbnailHybridProps) => {
+const VideoThumbnailHybrid = ({ video, size = 'medium', showCategory = true }: VideoThumbnailHybridProps) => {
   const [imageError, setImageError] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
   const { thumbnailUrl, isLoading, hasError } = useThumbnailUrl(video.id, video.title);
@@ -71,16 +67,19 @@ const VideoThumbnailHybrid = ({
     <div className={`video-thumbnail-hybrid ${getSizeClasses()}`}>
       {/* Loading placeholder */}
       {(isLoading || !imageLoaded) && (
-        <div className="thumbnail-loading" style={{
-          backgroundColor: '#303030',
-          width: '100%',
-          height: '100%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: '24px',
-          color: '#666'
-        }}>
+        <div
+          className="thumbnail-loading"
+          style={{
+            backgroundColor: '#303030',
+            width: '100%',
+            height: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '24px',
+            color: '#666',
+          }}
+        >
           ⏳
         </div>
       )}

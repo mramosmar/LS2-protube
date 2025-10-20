@@ -4,6 +4,7 @@ import { useAllVideos } from './useAllVideos';
 import VideoPlayer from './components/VideoPlayer';
 import Header from './components/Header';
 import VideoGrid from './components/VideoGrid';
+import LoginModal from './components/LoginModal';
 
 export interface Video {
   id: number;
@@ -27,6 +28,7 @@ function App() {
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [showLoginModal, setShowLoginModal] = useState(false);
   const { loading, message, value: videos } = useAllVideos();
 
   // Get unique categories from videos
@@ -61,6 +63,14 @@ function App() {
     setSelectedVideo(null);
   };
 
+  const handleLoginClick = () => {
+    setShowLoginModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowLoginModal(false);
+  };
+
   return (
     <div className="App">
       <Header
@@ -70,6 +80,7 @@ function App() {
         selectedCategory={selectedCategory}
         onCategoryChange={setSelectedCategory}
         onLogoClick={handleBackToGrid}
+        onLogin={handleLoginClick} // Pass the function to open the modal
       />
       <main className="main-content">
         {selectedVideo ? (
@@ -90,6 +101,15 @@ function App() {
           />
         )}
       </main>
+      {showLoginModal && (
+        <LoginModal
+          onClose={handleCloseModal} // Pass the function to close the modal
+          onLogin={(username, password) => {
+            console.log('Login attempt:', username, password);
+            setShowLoginModal(false);
+          }}
+        />
+      )}
     </div>
   );
 }
