@@ -64,8 +64,8 @@ const VideoPlayer = ({ video, onBack, relatedVideos, onVideoSelect }: VideoPlaye
               controls
               width="100%"
               height="auto"
-              src={`../store/${video.id}.mp4`}
-              poster={`../store/${video.id}.webp`}
+              src={`http://localhost:8080/media/${video.id}.mp4`}
+              poster={`http://localhost:8080/media/${video.id}.webp`}
               className="video-element"
             >
               Tu navegador no soporta la reproducción de video.
