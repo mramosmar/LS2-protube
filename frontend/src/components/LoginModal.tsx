@@ -22,6 +22,10 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose, onLogin }) => {
     onLogin(username, password);
   };
 
+  const handleGoogleLogin = () => {
+    window.location.href = 'http://localhost:8080/oauth2/authorization/google';
+  };
+
   const handleOverlayClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget) {
       onClose();
@@ -29,27 +33,45 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose, onLogin }) => {
   };
 
   return (
-    <div className="modal-overlay" onClick={handleOverlayClick}>
-      <div className="modal-content">
-        <button className="close-button" onClick={onClose} aria-label="Cerrar">
-          &times;
-        </button>
-        <h2>Iniciar Sesión</h2>
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label htmlFor="username">Usuario</label>
-            <input type="text" id="username" name="username" required autoComplete="username" autoFocus />
-          </div>
-          <div className="form-group">
-            <label htmlFor="password">Contraseña</label>
-            <input type="password" id="password" name="password" required autoComplete="current-password" />
-          </div>
-          <button type="submit" className="login-button">
-            Iniciar Sesión
+      <div className="modal-overlay" onClick={handleOverlayClick}>
+        <div className="modal-content">
+          <button className="close-button" onClick={onClose} aria-label="Cerrar">
+            &times;
           </button>
-        </form>
+          <h2>Iniciar Sesión</h2>
+          <form onSubmit={handleSubmit}>
+            <div className="form-group">
+              <label htmlFor="username">Usuario</label>
+              <input
+                  type="text"
+                  id="username"
+                  name="username"
+                  required
+                  autoComplete="username"
+                  autoFocus
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor="password">Contraseña</label>
+              <input
+                  type="password"
+                  id="password"
+                  name="password"
+                  required
+                  autoComplete="current-password"
+              />
+            </div>
+            <button type="submit" className="login-button">
+              Iniciar Sesión
+            </button>
+          </form>
+          <div className="separator">o</div>
+          <button onClick={handleGoogleLogin} className="google-login-button">
+            <i className="google-icon"></i>
+            Iniciar sesión con Google
+          </button>
+        </div>
       </div>
-    </div>
   );
 };
 
