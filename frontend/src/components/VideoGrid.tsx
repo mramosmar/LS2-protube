@@ -9,13 +9,6 @@ interface VideoGridProps {
 }
 
 const VideoGrid = ({ videos, onVideoSelect }: VideoGridProps) => {
-  // Function to format duration from seconds to minutes:seconds
-  const formatDuration = (seconds: number): string => {
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
-
   // Function to format view count (placeholder for now)
   const formatViews = (id: number): string => {
     // Simulate view count based on video id
@@ -29,7 +22,7 @@ const VideoGrid = ({ videos, onVideoSelect }: VideoGridProps) => {
   };
 
   // Function to get upload time (placeholder)
-  const getUploadTime = (id: number): string => {
+  const getUploadTime = (_: number): string => {
     const days = Math.floor(Math.random() * 365) + 1;
     if (days > 30) {
       const months = Math.floor(days / 30);
