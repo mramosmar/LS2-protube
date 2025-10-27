@@ -24,20 +24,16 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        // ---- Rutas públicas (ajusta a tus necesidades) ----
                         .requestMatchers("/", "/error").permitAll()
                         .requestMatchers("/api/auth/**", "/oauth2/**", "/login/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/health").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/videos/**").permitAll()
-                        // Swagger opcional en dev:
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
-                        // ---------------------------------------------------
                         .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth2 -> oauth2
                         .successHandler((request, response, authentication) -> {
                             var oAuth2User = (DefaultOAuth2User) authentication.getPrincipal();
-                            // TODO: persiste/usa oAuth2User si te hace falta
                             response.sendRedirect("http://localhost:5173/oauth2/redirect");
                         })
                         .failureHandler((request, response, exception) -> {
@@ -51,7 +47,6 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration cfg = new CorsConfiguration();
-        // En dev: permite Vite (5173) y CRA (3000). No uses "*" con credenciales.
         cfg.setAllowedOrigins(
                 Arrays.asList("http://localhost:5173", "http://127.0.0.1:5173",
                         "http://localhost:3000", "http://127.0.0.1:3000")
