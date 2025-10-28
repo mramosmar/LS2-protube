@@ -124,6 +124,7 @@ function App() {
             onBack={handleBackToGrid}
             relatedVideos={getRelatedVideos(selectedVideo, videos || [], 15)}
             onVideoSelect={handleVideoSelect}
+            selectedCategory={selectedCategory}
           />
         ) : (
           <ContentApp

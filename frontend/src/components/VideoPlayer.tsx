@@ -9,10 +9,19 @@ interface VideoPlayerProps {
   onBack: () => void;
   relatedVideos: Video[];
   onVideoSelect: (video: Video) => void;
+  selectedCategory: string;
 }
 
-const VideoPlayer = ({ video, onBack, relatedVideos, onVideoSelect }: VideoPlayerProps) => {
+const VideoPlayer = ({ video, onBack, relatedVideos, onVideoSelect, selectedCategory }: VideoPlayerProps) => {
   const [showFullDescription, setShowFullDescription] = useState(false);
+
+  // Filter related videos by selected category if needed
+  const filteredRelatedVideos = useMemo(() => {
+    if (selectedCategory === 'all') {
+      return relatedVideos;
+    }
+    return relatedVideos.filter(v => v.meta?.categories?.includes(selectedCategory));
+  }, [relatedVideos, selectedCategory]);
 
   // Group related videos by relationship type
   const groupedRelatedVideos = useMemo(() => {
@@ -28,13 +37,13 @@ const VideoPlayer = ({ video, onBack, relatedVideos, onVideoSelect }: VideoPlaye
       others: []
     };
 
-    relatedVideos.forEach(relatedVideo => {
+    filteredRelatedVideos.forEach(relatedVideo => {
       const similarity = calculateSimilarity(video, relatedVideo);
-      
+
       // Categorizar por tipo de relación (prioridad)
       if (relatedVideo.user.toLowerCase() === video.user.toLowerCase()) {
         groups.sameAuthor.push(relatedVideo);
-      } else if (video.meta?.categories?.some(cat => 
+      } else if (video.meta?.categories?.some(cat =>
         relatedVideo.meta?.categories?.some(cat2 => cat2.toLowerCase() === cat.toLowerCase())
       )) {
         groups.sameCategory.push(relatedVideo);
@@ -46,18 +55,18 @@ const VideoPlayer = ({ video, onBack, relatedVideos, onVideoSelect }: VideoPlaye
     });
 
     return groups;
-  }, [video, relatedVideos]);
+  }, [video, filteredRelatedVideos]);
 
   // Función para obtener el badge de relación
   const getRelationBadge = (relatedVideo: Video): { text: string; className: string } | null => {
     if (relatedVideo.user.toLowerCase() === video.user.toLowerCase()) {
       return { text: 'Mismo autor', className: 'badge-author' };
     }
-    
-    const commonCategories = video.meta?.categories?.filter(cat => 
+
+    const commonCategories = video.meta?.categories?.filter(cat =>
       relatedVideo.meta?.categories?.some(cat2 => cat2.toLowerCase() === cat.toLowerCase())
     ) || [];
-    
+
     if (commonCategories.length > 0) {
       return { text: commonCategories[0], className: 'badge-category' };
     }
