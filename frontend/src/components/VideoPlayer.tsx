@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Video } from '../App';
 import VideoThumbnailHybrid from './VideoThumbnailHybrid';
 import './VideoPlayer.css';
+import { calculateSimilarity } from '../utils/videoRecommendations';
 
 interface VideoPlayerProps {
   video: Video;
@@ -12,6 +13,57 @@ interface VideoPlayerProps {
 
 const VideoPlayer = ({ video, onBack, relatedVideos, onVideoSelect }: VideoPlayerProps) => {
   const [showFullDescription, setShowFullDescription] = useState(false);
+
+  // Group related videos by relationship type
+  const groupedRelatedVideos = useMemo(() => {
+    const groups: {
+      sameAuthor: Video[];
+      sameCategory: Video[];
+      similarTitle: Video[];
+      others: Video[];
+    } = {
+      sameAuthor: [],
+      sameCategory: [],
+      similarTitle: [],
+      others: []
+    };
+
+    relatedVideos.forEach(relatedVideo => {
+      const similarity = calculateSimilarity(video, relatedVideo);
+      
+      // Categorizar por tipo de relación (prioridad)
+      if (relatedVideo.user.toLowerCase() === video.user.toLowerCase()) {
+        groups.sameAuthor.push(relatedVideo);
+      } else if (video.meta?.categories?.some(cat => 
+        relatedVideo.meta?.categories?.some(cat2 => cat2.toLowerCase() === cat.toLowerCase())
+      )) {
+        groups.sameCategory.push(relatedVideo);
+      } else if (similarity > 0) {
+        groups.similarTitle.push(relatedVideo);
+      } else {
+        groups.others.push(relatedVideo);
+      }
+    });
+
+    return groups;
+  }, [video, relatedVideos]);
+
+  // Función para obtener el badge de relación
+  const getRelationBadge = (relatedVideo: Video): { text: string; className: string } | null => {
+    if (relatedVideo.user.toLowerCase() === video.user.toLowerCase()) {
+      return { text: 'Mismo autor', className: 'badge-author' };
+    }
+    
+    const commonCategories = video.meta?.categories?.filter(cat => 
+      relatedVideo.meta?.categories?.some(cat2 => cat2.toLowerCase() === cat.toLowerCase())
+    ) || [];
+    
+    if (commonCategories.length > 0) {
+      return { text: commonCategories[0], className: 'badge-category' };
+    }
+
+    return null;
+  };
 
   // Function to format duration
   const formatDuration = (seconds: number): string => {
@@ -180,18 +232,96 @@ const VideoPlayer = ({ video, onBack, relatedVideos, onVideoSelect }: VideoPlaye
       <div className="video-sidebar">
         <h3 className="sidebar-title">Videos relacionados</h3>
         <div className="related-videos">
-          {relatedVideos.map((relatedVideo) => (
-            <div key={relatedVideo.id} className="related-video" onClick={() => onVideoSelect(relatedVideo)}>
-              <div className="related-thumbnail">
-                <VideoThumbnailHybrid video={relatedVideo} size="small" showCategory={false} useRealImages={true} />
-              </div>
-              <div className="related-info">
-                <h4 className="related-title">{relatedVideo.title}</h4>
-                <p className="related-user">{relatedVideo.user}</p>
-                <p className="related-views">{formatViews(relatedVideo.id)}</p>
-              </div>
-            </div>
-          ))}
+          {/* Videos del mismo autor */}
+          {groupedRelatedVideos.sameAuthor.length > 0 && (
+            <>
+              <div className="related-section-title">Del mismo autor</div>
+              {groupedRelatedVideos.sameAuthor.map((relatedVideo) => {
+                const badge = getRelationBadge(relatedVideo);
+                return (
+                  <div key={relatedVideo.id} className="related-video" onClick={() => onVideoSelect(relatedVideo)}>
+                    <div className="related-thumbnail">
+                      <VideoThumbnailHybrid video={relatedVideo} size="small" showCategory={false} useRealImages={true} />
+                    </div>
+                    <div className="related-info">
+                      <h4 className="related-title">{relatedVideo.title}</h4>
+                      <p className="related-user">{relatedVideo.user}</p>
+                      <p className="related-views">{formatViews(relatedVideo.id)}</p>
+                      {badge && <span className={`relation-badge ${badge.className}`}>{badge.text}</span>}
+                    </div>
+                  </div>
+                );
+              })}
+            </>
+          )}
+
+          {/* Videos de la misma categoría */}
+          {groupedRelatedVideos.sameCategory.length > 0 && (
+            <>
+              <div className="related-section-title">De categorías similares</div>
+              {groupedRelatedVideos.sameCategory.map((relatedVideo) => {
+                const badge = getRelationBadge(relatedVideo);
+                return (
+                  <div key={relatedVideo.id} className="related-video" onClick={() => onVideoSelect(relatedVideo)}>
+                    <div className="related-thumbnail">
+                      <VideoThumbnailHybrid video={relatedVideo} size="small" showCategory={false} useRealImages={true} />
+                    </div>
+                    <div className="related-info">
+                      <h4 className="related-title">{relatedVideo.title}</h4>
+                      <p className="related-user">{relatedVideo.user}</p>
+                      <p className="related-views">{formatViews(relatedVideo.id)}</p>
+                      {badge && <span className={`relation-badge ${badge.className}`}>{badge.text}</span>}
+                    </div>
+                  </div>
+                );
+              })}
+            </>
+          )}
+
+          {/* Videos con títulos similares */}
+          {groupedRelatedVideos.similarTitle.length > 0 && (
+            <>
+              <div className="related-section-title">Contenido similar</div>
+              {groupedRelatedVideos.similarTitle.map((relatedVideo) => {
+                const badge = getRelationBadge(relatedVideo);
+                return (
+                  <div key={relatedVideo.id} className="related-video" onClick={() => onVideoSelect(relatedVideo)}>
+                    <div className="related-thumbnail">
+                      <VideoThumbnailHybrid video={relatedVideo} size="small" showCategory={false} useRealImages={true} />
+                    </div>
+                    <div className="related-info">
+                      <h4 className="related-title">{relatedVideo.title}</h4>
+                      <p className="related-user">{relatedVideo.user}</p>
+                      <p className="related-views">{formatViews(relatedVideo.id)}</p>
+                      {badge && <span className={`relation-badge ${badge.className}`}>{badge.text}</span>}
+                    </div>
+                  </div>
+                );
+              })}
+            </>
+          )}
+
+          {/* Otros videos */}
+          {groupedRelatedVideos.others.length > 0 && (
+            <>
+              {groupedRelatedVideos.others.map((relatedVideo) => {
+                const badge = getRelationBadge(relatedVideo);
+                return (
+                  <div key={relatedVideo.id} className="related-video" onClick={() => onVideoSelect(relatedVideo)}>
+                    <div className="related-thumbnail">
+                      <VideoThumbnailHybrid video={relatedVideo} size="small" showCategory={false} useRealImages={true} />
+                    </div>
+                    <div className="related-info">
+                      <h4 className="related-title">{relatedVideo.title}</h4>
+                      <p className="related-user">{relatedVideo.user}</p>
+                      <p className="related-views">{formatViews(relatedVideo.id)}</p>
+                      {badge && <span className={`relation-badge ${badge.className}`}>{badge.text}</span>}
+                    </div>
+                  </div>
+                );
+              })}
+            </>
+          )}
         </div>
       </div>
     </div>

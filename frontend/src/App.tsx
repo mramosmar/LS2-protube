@@ -5,6 +5,7 @@ import VideoPlayer from './components/VideoPlayer';
 import Header from './components/Header';
 import VideoGrid from './components/VideoGrid';
 import LoginModal from './components/LoginModal';
+import { getRelatedVideos } from './utils/videoRecommendations';
 
 export interface Video {
   id: number;
@@ -121,7 +122,7 @@ function App() {
           <VideoPlayer
             video={selectedVideo}
             onBack={handleBackToGrid}
-            relatedVideos={videos?.filter((v) => v.id !== selectedVideo.id).slice(0, 10) || []}
+            relatedVideos={getRelatedVideos(selectedVideo, videos || [], 15)}
             onVideoSelect={handleVideoSelect}
           />
         ) : (
