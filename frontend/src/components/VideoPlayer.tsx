@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { Video } from '../App';
 import VideoThumbnailHybrid from './VideoThumbnailHybrid';
 import './VideoPlayer.css';
-import { calculateSimilarity } from '../utils/videoRecommendations';
+import { calculateSimilarity, calculateTitleSimilarity } from '../utils/videoRecommendations';
 
 interface VideoPlayerProps {
   video: Video;
@@ -37,9 +37,13 @@ const VideoPlayer = ({ video, onBack, relatedVideos, onVideoSelect, selectedCate
       others: []
     };
 
-    filteredRelatedVideos.forEach(relatedVideo => {
-      const similarity = calculateSimilarity(video, relatedVideo);
+    // Crear un array con los videos y su puntuación de similitud de título
+    const videosWithTitleScore = filteredRelatedVideos.map(relatedVideo => ({
+      video: relatedVideo,
+      titleScore: calculateTitleSimilarity(video, relatedVideo)
+    }));
 
+    videosWithTitleScore.forEach(({ video: relatedVideo, titleScore }) => {
       // Categorizar por tipo de relación (prioridad)
       if (relatedVideo.user.toLowerCase() === video.user.toLowerCase()) {
         groups.sameAuthor.push(relatedVideo);
@@ -47,11 +51,30 @@ const VideoPlayer = ({ video, onBack, relatedVideos, onVideoSelect, selectedCate
         relatedVideo.meta?.categories?.some(cat2 => cat2.toLowerCase() === cat.toLowerCase())
       )) {
         groups.sameCategory.push(relatedVideo);
-      } else if (similarity > 0) {
+      } else if (titleScore > 0) {
+        // Si hay palabras en común en el título, va a similarTitle
         groups.similarTitle.push(relatedVideo);
       } else {
         groups.others.push(relatedVideo);
       }
+    });
+
+    // Ordenar similarTitle por puntuación de similitud de título (descendente)
+    groups.similarTitle.sort((a, b) => {
+      const scoreA = calculateTitleSimilarity(video, a);
+      const scoreB = calculateTitleSimilarity(video, b);
+      return scoreB - scoreA;
+    });
+
+    // Ordenar others por similitud general (pueden tener tags en común, etc.)
+    groups.others.sort((a, b) => {
+      const scoreA = calculateSimilarity(video, a);
+      const scoreB = calculateSimilarity(video, b);
+      if (scoreB !== scoreA) {
+        return scoreB - scoreA;
+      }
+      // Si tienen la misma puntuación, ordenar alfabéticamente
+      return a.title.localeCompare(b.title, 'es', { sensitivity: 'base' });
     });
 
     return groups;
@@ -287,10 +310,11 @@ const VideoPlayer = ({ video, onBack, relatedVideos, onVideoSelect, selectedCate
             </>
           )}
 
-          {/* Videos con títulos similares */}
-          {groupedRelatedVideos.similarTitle.length > 0 && (
+          {/* Videos con títulos similares y otros */}
+          {(groupedRelatedVideos.similarTitle.length > 0 || groupedRelatedVideos.others.length > 0) && (
             <>
-              <div className="related-section-title">Contenido similar</div>
+              <div className="related-section-title">Otros</div>
+              {/* Videos con títulos similares */}
               {groupedRelatedVideos.similarTitle.map((relatedVideo) => {
                 const badge = getRelationBadge(relatedVideo);
                 return (
@@ -307,12 +331,7 @@ const VideoPlayer = ({ video, onBack, relatedVideos, onVideoSelect, selectedCate
                   </div>
                 );
               })}
-            </>
-          )}
-
-          {/* Otros videos */}
-          {groupedRelatedVideos.others.length > 0 && (
-            <>
+              {/* Otros videos */}
               {groupedRelatedVideos.others.map((relatedVideo) => {
                 const badge = getRelationBadge(relatedVideo);
                 return (
