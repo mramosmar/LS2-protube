@@ -26,10 +26,32 @@ export interface Video {
 
 function App() {
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
+  const [previousVideo, setPreviousVideo] = useState<Video | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [showLoginModal, setShowLoginModal] = useState(false);
   const { loading, message, value: videos } = useAllVideos();
+
+  // Handler for search that returns to grid view
+  const handleSearchChange = (term: string) => {
+    setSearchTerm(term);
+    if (selectedVideo && term !== '') {
+      setPreviousVideo(selectedVideo); // Save current video before leaving
+      setSelectedVideo(null); // Return to grid when searching from video player
+    } else if (term === '' && previousVideo && !selectedVideo) {
+      setSelectedVideo(previousVideo); // Restore previous video when clearing search
+      setPreviousVideo(null);
+    }
+  };
+
+  // Handler for category change that returns to grid view
+  const handleCategoryChange = (category: string) => {
+    setSelectedCategory(category);
+    if (selectedVideo) {
+      setPreviousVideo(selectedVideo); // Save current video before leaving
+      setSelectedVideo(null); // Return to grid when changing category from video player
+    }
+  };
 
   // Get unique categories from videos
   const categories = useMemo(() => {
@@ -50,7 +72,7 @@ function App() {
         }
 
         const searchLower = searchTerm.toLowerCase();
-        
+
         // Create a regex that matches the search term at the start of a word
         // \b is a word boundary, so it matches the start of words
         const wordBoundaryRegex = new RegExp(`\\b${searchLower.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'i');
@@ -67,10 +89,12 @@ function App() {
 
   const handleVideoSelect = (video: Video) => {
     setSelectedVideo(video);
+    setPreviousVideo(null); // Clear previous video when selecting a new one
   };
 
   const handleBackToGrid = () => {
     setSelectedVideo(null);
+    setPreviousVideo(null); // Clear previous video when going back
   };
 
   const handleLoginClick = () => {
@@ -85,10 +109,10 @@ function App() {
     <div className="App">
       <Header
         searchTerm={searchTerm}
-        onSearchChange={setSearchTerm}
+        onSearchChange={handleSearchChange}
         categories={categories}
         selectedCategory={selectedCategory}
-        onCategoryChange={setSelectedCategory}
+        onCategoryChange={handleCategoryChange}
         onLogoClick={handleBackToGrid}
         onLogin={handleLoginClick} // Pass the function to open the modal
       />
