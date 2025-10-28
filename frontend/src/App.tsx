@@ -122,7 +122,7 @@ function App() {
           <VideoPlayer
             video={selectedVideo}
             onBack={handleBackToGrid}
-            relatedVideos={getRelatedVideos(selectedVideo, videos || [], 15)}
+            relatedVideos={getRelatedVideos(selectedVideo, videos || [], 25)}
             onVideoSelect={handleVideoSelect}
             selectedCategory={selectedCategory}
           />

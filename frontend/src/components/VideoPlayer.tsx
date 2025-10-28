@@ -23,6 +23,11 @@ const VideoPlayer = ({ video, onBack, relatedVideos, onVideoSelect, selectedCate
     return relatedVideos.filter(v => v.meta?.categories?.includes(selectedCategory));
   }, [relatedVideos, selectedCategory]);
 
+  // Get all videos without category filter for "others" section
+  const allRelatedVideos = useMemo(() => {
+    return relatedVideos;
+  }, [relatedVideos]);
+
   // Group related videos by relationship type
   const groupedRelatedVideos = useMemo(() => {
     const groups: {
@@ -43,6 +48,12 @@ const VideoPlayer = ({ video, onBack, relatedVideos, onVideoSelect, selectedCate
       titleScore: calculateTitleSimilarity(video, relatedVideo)
     }));
 
+    // También calcular similitud para TODOS los videos (sin filtro de categoría) para "Otros similares"
+    const allVideosWithTitleScore = allRelatedVideos.map(relatedVideo => ({
+      video: relatedVideo,
+      titleScore: calculateTitleSimilarity(video, relatedVideo)
+    }));
+
     videosWithTitleScore.forEach(({ video: relatedVideo, titleScore }) => {
       // Categorizar por tipo de relación (prioridad)
       if (relatedVideo.user.toLowerCase() === video.user.toLowerCase()) {
@@ -59,26 +70,61 @@ const VideoPlayer = ({ video, onBack, relatedVideos, onVideoSelect, selectedCate
       }
     });
 
-    // Ordenar similarTitle por puntuación de similitud de título (descendente)
+    // Agregar a "similarTitle" videos de TODAS las categorías que tengan similitud de título
+    // pero que no estén ya incluidos en otros grupos
+    const alreadyInGroups = new Set([
+      video.id,
+      ...groups.sameAuthor.map(v => v.id),
+      ...groups.sameCategory.map(v => v.id),
+      ...groups.similarTitle.map(v => v.id),
+      ...groups.others.map(v => v.id)
+    ]);
+
+    allVideosWithTitleScore.forEach(({ video: relatedVideo, titleScore }) => {
+      if (titleScore > 0 && !alreadyInGroups.has(relatedVideo.id)) {
+        groups.similarTitle.push(relatedVideo);
+        alreadyInGroups.add(relatedVideo.id);
+      }
+    });
+
+    // Obtener IDs de videos ya clasificados
+    const alreadyIncludedIds = new Set([
+      video.id,
+      ...groups.sameAuthor.map(v => v.id),
+      ...groups.sameCategory.map(v => v.id),
+      ...groups.similarTitle.map(v => v.id),
+      ...groups.others.map(v => v.id)
+    ]);
+
+    // Crear lista de videos sobrantes (de todas las categorías)
+    const remainingVideos = allRelatedVideos.filter(v => !alreadyIncludedIds.has(v.id));
+
+    // Ordenar aleatoriamente los videos sobrantes usando hash
+    remainingVideos.sort((a, b) => {
+      const seed = video.id * 2654435761;
+      const hashA = ((a.id ^ seed) * 1103515245 + 12345) % 2147483647;
+      const hashB = ((b.id ^ seed) * 1103515245 + 12345) % 2147483647;
+      return hashB - hashA;
+    });
+
+    // Seleccionar videos aleatorios de los sobrantes
+    groups.others = remainingVideos.slice(0, 5);
     groups.similarTitle.sort((a, b) => {
       const scoreA = calculateTitleSimilarity(video, a);
       const scoreB = calculateTitleSimilarity(video, b);
-      return scoreB - scoreA;
-    });
-
-    // Ordenar others por similitud general (pueden tener tags en común, etc.)
-    groups.others.sort((a, b) => {
-      const scoreA = calculateSimilarity(video, a);
-      const scoreB = calculateSimilarity(video, b);
       if (scoreB !== scoreA) {
         return scoreB - scoreA;
       }
-      // Si tienen la misma puntuación, ordenar alfabéticamente
-      return a.title.localeCompare(b.title, 'es', { sensitivity: 'base' });
+      // Si tienen la misma puntuación, ordenar de manera pseudo-aleatoria determinista
+      const hashA = (a.id * 7919 + video.id * 6151) % 233280;
+      const hashB = (b.id * 7919 + video.id * 6151) % 233280;
+      return hashB - hashA;
     });
 
+    // Los videos en "others" ya están seleccionados (3 aleatorios), no necesitan más ordenamiento
+
     return groups;
-  }, [video, filteredRelatedVideos]);
+  }, [video, filteredRelatedVideos, allRelatedVideos]);
 
   // Función para obtener el badge de relación
   const getRelationBadge = (relatedVideo: Video): { text: string; className: string } | null => {
@@ -310,11 +356,10 @@ const VideoPlayer = ({ video, onBack, relatedVideos, onVideoSelect, selectedCate
             </>
           )}
 
-          {/* Videos con títulos similares y otros */}
-          {(groupedRelatedVideos.similarTitle.length > 0 || groupedRelatedVideos.others.length > 0) && (
+          {/* Videos con títulos similares */}
+          {groupedRelatedVideos.similarTitle.length > 0 && (
             <>
-              <div className="related-section-title">Otros</div>
-              {/* Videos con títulos similares */}
+              <div className="related-section-title">Otros similares</div>
               {groupedRelatedVideos.similarTitle.map((relatedVideo) => {
                 const badge = getRelationBadge(relatedVideo);
                 return (
@@ -331,7 +376,13 @@ const VideoPlayer = ({ video, onBack, relatedVideos, onVideoSelect, selectedCate
                   </div>
                 );
               })}
-              {/* Otros videos */}
+            </>
+          )}
+
+          {/* Otros videos */}
+          {groupedRelatedVideos.others.length > 0 && (
+            <>
+              <div className="related-section-title">Otros</div>
               {groupedRelatedVideos.others.map((relatedVideo) => {
                 const badge = getRelationBadge(relatedVideo);
                 return (

@@ -6,7 +6,7 @@ import { Video } from '../App';
  */
 const SEMANTIC_GROUPS: { [key: string]: string[] } = {
     // Cocina y comida
-    cocina: ['cooking', 'receta', 'recipe', 'comida', 'food', 'cena', 'dinner', 'almuerzo', 'lunch', 'desayuno', 'breakfast', 'chef', 'gastronomia', 'gastronomy', 'plato', 'dish', 'preparar', 'prepare', 'cocinar', 'cook'],
+    cocina: ['cooking', 'receta', 'recetas', 'recipe', 'recipes', 'roasts', 'roast', 'roasting', 'comida', 'comidas', 'food', 'cena', 'cenas', 'dinner', 'dinners', 'almuerzo', 'almuerzos', 'lunch', 'desayuno', 'desayunos', 'breakfast', 'chef', 'gastronomia', 'gastronomy', 'plato', 'platos', 'dish', 'dishes', 'preparar', 'prepare', 'cocinar', 'cook', 'cocinando', 'hornear', 'bake', 'baking', 'freir', 'fry', 'frying', 'hervir', 'boil', 'boiling', 'asar', 'grill', 'grilling', 'mezclar', 'mix', 'mixing', 'ingrediente', 'ingredientes', 'ingredient', 'ingredients', 'rapido', 'rapida', 'rapidos', 'rapidas', 'quick', 'fast', 'facil', 'faciles', 'easy', 'minutos', 'minutes', 'meal', 'meals', 'carne', 'meats', 'pollo', 'chicken', 'pavo', 'turkey', 'cerdo', 'pork', 'ternera', 'beef', 'pescado', 'fish', 'marisco', 'seafood', 'vegetales', 'vegetables', 'verduras', 'ensalada', 'salad', 'sopa', 'soup', 'guiso', 'stew', 'pasta', 'arroz', 'rice', 'pan', 'bread', 'postre', 'dessert', 'dulce', 'sweet', 'salado', 'savory', 'picante', 'spicy', 'agridulce', 'leg', 'pierna', 'clay', 'barro', 'horno', 'oven', 'fuego', 'fire', 'barbacoa', 'barbecue', 'bbq', 'asado'],
 
     // Deportes
     deporte: ['sport', 'futbol', 'football', 'soccer', 'basketball', 'baloncesto', 'tenis', 'tennis', 'natacion', 'swimming', 'atletismo', 'athletics', 'entrenamiento', 'training', 'gimnasio', 'gym', 'ejercicio', 'exercise'],
