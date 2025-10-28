@@ -44,11 +44,19 @@ function App() {
 
     return videos
       .filter((video) => {
-        const matchesSearch =
-          searchTerm === '' ||
-          video.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          video.user.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          video.meta?.tags?.some((tag) => tag.toLowerCase().includes(searchTerm.toLowerCase()));
+        if (searchTerm === '') {
+          const matchesCategory = selectedCategory === 'all' || video.meta?.categories?.includes(selectedCategory);
+          return matchesCategory;
+        }
+
+        const searchLower = searchTerm.toLowerCase();
+        
+        // Create a regex that matches the search term at the start of a word
+        // \b is a word boundary, so it matches the start of words
+        const wordBoundaryRegex = new RegExp(`\\b${searchLower.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'i');
+
+        // Only search in video title for more precise results
+        const matchesSearch = wordBoundaryRegex.test(video.title);
 
         const matchesCategory = selectedCategory === 'all' || video.meta?.categories?.includes(selectedCategory);
 
