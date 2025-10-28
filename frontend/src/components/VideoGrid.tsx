@@ -9,10 +9,11 @@ interface VideoGridProps {
 }
 
 const VideoGrid = ({ videos, onVideoSelect }: VideoGridProps) => {
-  // Function to format view count (placeholder for now)
+  // Function to format view count (deterministic based on video ID)
   const formatViews = (id: number): string => {
-    // Simulate view count based on video id
-    const views = Math.floor(Math.random() * 1000000) + id * 1000;
+    // Generate deterministic value using a simple hash function
+    const seed = (id * 9301 + 49297) % 233280;
+    const views = (seed % 1000000) + id * 1000;
     if (views > 1000000) {
       return `${(views / 1000000).toFixed(1)}M visualizaciones`;
     } else if (views > 1000) {
@@ -21,9 +22,11 @@ const VideoGrid = ({ videos, onVideoSelect }: VideoGridProps) => {
     return `${views} visualizaciones`;
   };
 
-  // Function to get upload time (placeholder)
-  const getUploadTime = (_: number): string => {
-    const days = Math.floor(Math.random() * 365) + 1;
+  // Function to get upload time (deterministic based on video ID)
+  const getUploadTime = (id: number): string => {
+    // Generate deterministic value using a simple hash function
+    const seed = (id * 8121 + 28411) % 233280;
+    const days = (seed % 365) + 1;
     if (days > 30) {
       const months = Math.floor(days / 30);
       return `hace ${months} ${months === 1 ? 'mes' : 'meses'}`;

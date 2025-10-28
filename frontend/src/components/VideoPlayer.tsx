@@ -20,9 +20,11 @@ const VideoPlayer = ({ video, onBack, relatedVideos, onVideoSelect }: VideoPlaye
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // Function to format view count
+  // Function to format view count (deterministic based on video ID)
   const formatViews = (id: number): string => {
-    const views = Math.floor(Math.random() * 1000000) + id * 1000;
+    // Generate deterministic value using a simple hash function
+    const seed = (id * 9301 + 49297) % 233280;
+    const views = (seed % 1000000) + id * 1000;
     if (views > 1000000) {
       return `${(views / 1000000).toFixed(1)}M visualizaciones`;
     } else if (views > 1000) {
@@ -32,7 +34,9 @@ const VideoPlayer = ({ video, onBack, relatedVideos, onVideoSelect }: VideoPlaye
   };
 
   const getUploadTime = (id: number): string => {
-    const days = Math.floor(Math.random() * 365) + 1;
+    // Generate deterministic value using a simple hash function
+    const seed = (id * 8121 + 28411) % 233280;
+    const days = (seed % 365) + 1;
     if (days > 30) {
       const months = Math.floor(days / 30);
       return `hace ${months} ${months === 1 ? 'mes' : 'meses'}`;
@@ -41,7 +45,9 @@ const VideoPlayer = ({ video, onBack, relatedVideos, onVideoSelect }: VideoPlaye
   };
 
   const getLikes = (id: number): string => {
-    const likes = Math.floor(Math.random() * 50000) + id * 100;
+    // Generate deterministic value using a simple hash function
+    const seed = (id * 7919 + 37199) % 233280;
+    const likes = (seed % 50000) + id * 100;
     if (likes > 1000) {
       return `${(likes / 1000).toFixed(1)}K`;
     }
@@ -118,7 +124,7 @@ const VideoPlayer = ({ video, onBack, relatedVideos, onVideoSelect }: VideoPlaye
               <div className="channel-avatar">{video.user.charAt(0).toUpperCase()}</div>
               <div className="channel-details">
                 <h3 className="channel-name">{video.user}</h3>
-                <p className="channel-subscribers">{Math.floor(Math.random() * 1000)}K suscriptores</p>
+                <p className="channel-subscribers">{Math.floor(((video.id * 6151 + 21377) % 233280) % 1000)}K suscriptores</p>
               </div>
             </div>
             <button className="subscribe-button">Suscribirse</button>
