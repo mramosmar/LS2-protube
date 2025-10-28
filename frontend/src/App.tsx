@@ -42,17 +42,19 @@ function App() {
   const filteredVideos = useMemo(() => {
     if (!videos) return [];
 
-    return videos.filter((video) => {
-      const matchesSearch =
-        searchTerm === '' ||
-        video.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        video.user.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        video.meta?.tags?.some((tag) => tag.toLowerCase().includes(searchTerm.toLowerCase()));
+    return videos
+      .filter((video) => {
+        const matchesSearch =
+          searchTerm === '' ||
+          video.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          video.user.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          video.meta?.tags?.some((tag) => tag.toLowerCase().includes(searchTerm.toLowerCase()));
 
-      const matchesCategory = selectedCategory === 'all' || video.meta?.categories?.includes(selectedCategory);
+        const matchesCategory = selectedCategory === 'all' || video.meta?.categories?.includes(selectedCategory);
 
-      return matchesSearch && matchesCategory;
-    });
+        return matchesSearch && matchesCategory;
+      })
+      .sort((a, b) => a.title.localeCompare(b.title, 'es', { sensitivity: 'base' }));
   }, [videos, searchTerm, selectedCategory]);
 
   const handleVideoSelect = (video: Video) => {
