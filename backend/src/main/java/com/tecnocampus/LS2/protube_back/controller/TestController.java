@@ -12,4 +12,7 @@ public class TestController {
     public String sayHello() {
         return "Hello, World!";
     }
-}
+
+    @GetMapping
+    public String test() {return "Backend is working"; }
+    }

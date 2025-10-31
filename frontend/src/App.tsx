@@ -5,7 +5,7 @@ import VideoPlayer from './components/VideoPlayer';
 import Header from './components/Header';
 import VideoGrid from './components/VideoGrid';
 import LoginModal from './components/LoginModal';
-
+import RegisterModal from './components/RegisterModal';
 export interface Video {
   id: number;
   title: string;
@@ -29,14 +29,15 @@ function App() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showRegisterModal, setShowRegisterModal] = useState(false);
   const { loading, message, value: videos } = useAllVideos();
 
   // Get unique categories from videos
-  const categories = useMemo(() => {
-    if (!videos) return [];
-    const allCategories = videos.flatMap((video) => video.meta?.categories || []);
-    return ['all', ...new Set(allCategories)];
-  }, [videos]);
+    const categories = useMemo(() => {
+        if (!videos) return [];
+        const allCategories = videos.flatMap((video) => video.meta?.categories || []);
+        return ['all', ...Array.from(new Set(allCategories))];
+    }, [videos]);
 
   // Filter videos based on search and category
   const filteredVideos = useMemo(() => {
@@ -63,13 +64,43 @@ function App() {
     setSelectedVideo(null);
   };
 
-  const handleLoginClick = () => {
-    setShowLoginModal(true);
-  };
+    const handleLogin = async (username: string, password: string) => {
+        try {
+            console.log('Login attempt:', username, password);
+            setShowLoginModal(false);
+        } catch (error) {
+            console.error('Error during login:', error);
+        }
+    };
 
-  const handleCloseModal = () => {
-    setShowLoginModal(false);
-  };
+    const handleRegister = async (username: string, password: string, email: string) => {
+        try {
+            console.log('Register attempt:', username, password, email);
+            setShowRegisterModal(false);
+            setShowLoginModal(true);
+        } catch (error) {
+            console.error('Error during registration:', error);
+        }
+    };
+
+    // Open modal handlers
+    const handleLoginClick = () => setShowLoginModal(true);
+    const handleRegisterClick = () => setShowRegisterModal(true);
+
+// Close modal handlers
+    const handleCloseLoginModal = () => setShowLoginModal(false);
+    const handleCloseRegisterModal = () => setShowRegisterModal(false);
+
+// Switch between modals handlers
+    const switchToRegister = () => {
+        setShowLoginModal(false);
+        setShowRegisterModal(true);
+    };
+
+    const switchToLogin = () => {
+        setShowRegisterModal(false);
+        setShowLoginModal(true);
+    };
 
   return (
     <div className="App">
@@ -103,11 +134,17 @@ function App() {
       </main>
       {showLoginModal && (
         <LoginModal
-          onClose={handleCloseModal} // Pass the function to close the modal
-          onLogin={(username, password) => {
-            console.log('Login attempt:', username, password);
-            setShowLoginModal(false);
-          }}
+          onClose={handleCloseLoginModal}
+          onLogin={handleLogin}
+          setShowRegisterModal={switchToRegister}
+        />
+      )}
+
+      {showRegisterModal && (
+        <RegisterModal
+          onClose={handleCloseRegisterModal}
+          onRegister={handleRegister}
+          onLoginClick={switchToLogin}
         />
       )}
     </div>
