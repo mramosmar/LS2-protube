@@ -1,11 +1,10 @@
-/* LoginModal.css and RegisterModal.css should be identical */
 .modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(0, 0, 0, 0.7);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -24,13 +23,18 @@
 
 .close-button {
   position: absolute;
-  right: 1rem;
-  top: 1rem;
+  top: 10px;
+  right: 10px;
   background: none;
   border: none;
   font-size: 1.5rem;
   cursor: pointer;
-  padding: 0.5rem;
+  padding: 5px 10px;
+  color: #666;
+}
+
+.close-button:hover {
+  color: #000;
 }
 
 .form-group {
@@ -40,51 +44,31 @@
 .form-group label {
   display: block;
   margin-bottom: 0.5rem;
-  font-weight: 500;
+  color: #333;
 }
 
 .form-group input {
   width: 100%;
-  padding: 0.75rem;
+  padding: 0.5rem;
   border: 1px solid #ddd;
   border-radius: 4px;
   font-size: 1rem;
 }
 
-.login-button,
-.secondary-button,
-.google-login-button {
+.login-button {
   width: 100%;
   padding: 0.75rem;
+  background-color: #007bff;
+  color: white;
   border: none;
   border-radius: 4px;
   font-size: 1rem;
   cursor: pointer;
-  margin: 0.5rem 0;
+  margin-top: 1rem;
 }
 
-.login-button {
-  background-color: #007bff;
-  color: white;
-}
-
-.secondary-button {
-  background-color: #007bff;  /* Same as login-button */
-  color: white;
-}
-
-.secondary-button:hover {
-  background-color: #0056b3;  /* Darker shade for hover */
-}
-
-.google-login-button {
-  background-color: #ffffff;
-  color: #757575;
-  border: 1px solid #ddd;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
+.login-button:hover {
+  background-color: #0056b3;
 }
 
 .separator {
@@ -121,4 +105,8 @@
     transform: translateY(0);
     opacity: 1;
   }
+}
+
+body.modal-open {
+  overflow: hidden;
 }
