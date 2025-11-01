@@ -1,5 +1,8 @@
 package com.tecnocampus.LS2.protube_back.security;
 
+import io.jsonwebtoken.security.Keys;
+import java.nio.charset.StandardCharsets;
+
 public class Token {
     public static void main(String[] args) {
         JwtTokenProvider jwtTokenProvider = new JwtTokenProvider();
