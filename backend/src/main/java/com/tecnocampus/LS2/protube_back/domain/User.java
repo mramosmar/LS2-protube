@@ -24,6 +24,9 @@ public class User {
     @NotBlank
     private String password;
 
+    @NotBlank
+    private String username;
+
     public User() {
         this.id = UUID.randomUUID().toString();
     }
@@ -32,6 +35,7 @@ public class User {
         this();
         this.email = dto.getEmail();
         this.password = dto.getPassword();
+        this.username = dto.getUsername();
     }
 
     // Getters and Setters
@@ -41,4 +45,6 @@ public class User {
     public void setEmail(String email) { this.email = email; }
     public String getPassword() { return password; }
     public void setPassword(String password) { this.password = password; }
+    public String getUsername() { return username; }
+    public void setUsername(String username) { this.username = username; }
 }

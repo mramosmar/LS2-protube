@@ -10,12 +10,15 @@ public class UserRegistrationDTO {
 
     @NotBlank(message = "Password is required")
     private String password;
+    @NotBlank(message = "Username is required")
+    private String username;
 
     public UserRegistrationDTO() {}
 
-    public UserRegistrationDTO(String email, String password) {
+    public UserRegistrationDTO(String email, String password, String username) {
         this.email = email;
         this.password = password;
+        this.username = username;
     }
 
     public String getEmail() {
@@ -32,5 +35,12 @@ public class UserRegistrationDTO {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+    public void setUsername(String username) {
+        this.username = username;
     }
 }
