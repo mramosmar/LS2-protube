@@ -132,21 +132,19 @@ function App() {
           />
         )}
       </main>
-      {showLoginModal && (
-        <LoginModal
-          onClose={handleCloseLoginModal}
-          onLogin={handleLogin}
-          setShowRegisterModal={switchToRegister}
-        />
-      )}
+        {showLoginModal && (
+            <LoginModal
+                onClose={handleCloseLoginModal}
+                onSwitchToRegister={switchToRegister}  // Changed from setShowRegisterModal
+            />
+        )}
 
-      {showRegisterModal && (
-        <RegisterModal
-          onClose={handleCloseRegisterModal}
-          onRegister={handleRegister}
-          onLoginClick={switchToLogin}
-        />
-      )}
+        {showRegisterModal && (
+            <RegisterModal
+                onClose={handleCloseRegisterModal}
+                onSwitchToLogin={switchToLogin}  // Changed from onLoginClick
+            />
+        )}
     </div>
   );
 }

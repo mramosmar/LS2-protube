@@ -29,6 +29,7 @@ public class UserService {
         UserRegistrationDTO dtoWithEncodedPassword = new UserRegistrationDTO();
         dtoWithEncodedPassword.setEmail(registrationDTO.getEmail());
         dtoWithEncodedPassword.setPassword(passwordEncoder.encode(registrationDTO.getPassword()));
+        dtoWithEncodedPassword.setUsername(registrationDTO.getUsername()); // Add this line
 
         User user = new User(dtoWithEncodedPassword);
         User savedUser = userRepository.save(user);
