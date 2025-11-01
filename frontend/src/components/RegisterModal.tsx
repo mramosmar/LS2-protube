@@ -44,7 +44,6 @@ const RegisterModal: React.FC<RegisterModalProps> = ({ onClose, onSwitchToLogin 
       const email = (form.elements.namedItem('email') as HTMLInputElement).value;
       const password = (form.elements.namedItem('password') as HTMLInputElement).value;
 
-      // Validate form before sending to backend
       validateForm(username, email, password);
 
       await authService.register({
@@ -52,7 +51,11 @@ const RegisterModal: React.FC<RegisterModalProps> = ({ onClose, onSwitchToLogin 
         email: email.trim(),
         password
       });
-      onSwitchToLogin();
+
+      // Navigate to home page after successful registration
+      window.location.href = '/';
+      // or if using react-router:
+      // navigate('/');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error en el registro');
     } finally {
