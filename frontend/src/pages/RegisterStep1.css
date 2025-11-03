@@ -1,0 +1,44 @@
+/* RegisterStep1.css - Styled to match LoginModal aesthetic */
+
+.step-indicator {
+  color: #64b5f6;
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin: 0 0 2rem 0;
+  text-align: center;
+}
+
+.input-hint {
+  color: #999;
+  font-size: 0.85rem;
+  margin-top: 0.25rem;
+  font-style: italic;
+}
+
+.login-link {
+  text-align: center;
+  margin-top: 1rem;
+}
+
+.login-link p {
+  color: #aaa;
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+.link-button {
+  background: none;
+  border: none;
+  color: #64b5f6;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  font-size: inherit;
+  padding: 0;
+  transition: color 0.2s ease;
+}
+
+.link-button:hover {
+  color: #2196f3;
+  text-decoration: underline;
+}
