@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { authService } from '../../services/authService';
+import RegisterStep1 from '../pages/RegisterStep1';
+import RegisterStep2 from '../pages/RegisterStep2';
 import './RegisterModal.css';
 
 interface RegisterModalProps {
@@ -8,8 +9,8 @@ interface RegisterModalProps {
 }
 
 const RegisterModal: React.FC<RegisterModalProps> = ({ onClose, onSwitchToLogin }) => {
-  const [error, setError] = useState<string>('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [step, setStep] = useState(1);
+  const [userData, setUserData] = useState({ username: '', email: '' });
 
   useEffect(() => {
     document.body.classList.add('modal-open');
@@ -18,114 +19,33 @@ const RegisterModal: React.FC<RegisterModalProps> = ({ onClose, onSwitchToLogin 
     };
   }, []);
 
-  const validateForm = (username: string, email: string, password: string) => {
-    if (!username.trim()) {
-      throw new Error('El nombre de usuario es obligatorio');
-    }
-    if (!email.trim()) {
-      throw new Error('El email es obligatorio');
-    }
-    if (!password) {
-      throw new Error('La contraseña es obligatoria');
-    }
-    if (username.trim().length < 3) {
-      throw new Error('El nombre de usuario debe tener al menos 3 caracteres');
-    }
+  const handleStep1Complete = (username: string, email: string) => {
+    setUserData({ username, email });
+    setStep(2);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setIsLoading(true);
+  const handleBackToStep1 = () => {
+    setStep(1);
+  };
 
-    try {
-      const form = e.target as HTMLFormElement;
-      const username = (form.elements.namedItem('username') as HTMLInputElement).value;
-      const email = (form.elements.namedItem('email') as HTMLInputElement).value;
-      const password = (form.elements.namedItem('password') as HTMLInputElement).value;
-
-      validateForm(username, email, password);
-
-      await authService.register({
-        username: username.trim(),
-        email: email.trim(),
-        password
-      });
-
-      // Navigate to home page after successful registration
-      window.location.href = '/';
-      // or if using react-router:
-      // navigate('/');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error en el registro');
-    } finally {
-      setIsLoading(false);
-    }
+  const handleRegistrationComplete = () => {
+    onClose();
   };
 
   return (
     <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="modal-content">
-        <button className="close-button" onClick={onClose} aria-label="Cerrar">×</button>
-        <h2>Registro</h2>
-        {error && <div className="error-message">{error}</div>}
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label htmlFor="username">Usuario *</label>
-            <input
-              type="text"
-              id="username"
-              name="username"
-              required
-              minLength={3}
-              placeholder="Nombre de usuario"
-              autoFocus
-            />
-          </div>
-          <div className="form-group">
-            <label htmlFor="email">Email *</label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              required
-              placeholder="correo@ejemplo.com"
-              autoComplete="email"
-            />
-          </div>
-          <div className="form-group">
-            <label htmlFor="password">Contraseña *</label>
-            <input
-              type="password"
-              id="password"
-              name="password"
-              required
-              minLength={6}
-              placeholder="Contraseña"
-              autoComplete="new-password"
-            />
-          </div>
-          <button type="submit" className="login-button" disabled={isLoading}>
-            {isLoading ? 'Registrando...' : 'Registrarse'}
-          </button>
-          <div className="separator">o</div>
-          <button
-            type="button"
-            onClick={onSwitchToLogin}
-            className="secondary-button"
-          >
-            Ya tengo cuenta
-          </button>
-          <div className="separator">o</div>
-          <button
-            type="button"
-            className="google-login-button"
-            onClick={() => window.location.href = 'http://localhost:8080/oauth2/authorization/google'}
-          >
-            <i className="google-icon"></i>
-            Iniciar sesión con Google
-          </button>
-        </form>
+        <button className="close-button" onClick={onClose} aria-label="Tancar">×</button>
+        {step === 1 ? (
+          <RegisterStep1 onNext={handleStep1Complete} onSwitchToLogin={onSwitchToLogin} />
+        ) : (
+          <RegisterStep2
+            username={userData.username}
+            email={userData.email}
+            onBack={handleBackToStep1}
+            onComplete={handleRegistrationComplete}
+          />
+        )}
       </div>
     </div>
   );
