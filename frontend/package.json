@@ -27,7 +27,6 @@
     "react-dom": "^19.1.1"
   },
   "devDependencies": {
-    "@types/node": "^24.5.2",
     "@babel/preset-env": "^7.28.3",
     "@babel/preset-react": "^7.27.1",
     "@babel/preset-typescript": "^7.27.1",
@@ -41,6 +40,7 @@
     "@vitejs/plugin-react": "^5.0.1",
     "babel-jest": "^30.0.5",
     "eslint": "^9.33.0",
+    "identity-obj-proxy": "^3.0.0",
     "jest": "^30.0.5",
     "jest-environment-jsdom": "^30.0.5",
     "jest-fetch-mock": "^3.0.3",
