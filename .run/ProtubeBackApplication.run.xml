@@ -1,9 +1,10 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="ProtubeBackApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
     <envs>
-      <env name="ENV_PROTUBE_GOOGLE_CLIENT_ID" value="" />
-      <env name="ENV_PROTUBE_GOOGLE_CLIENT_SECRET" value="" />
-      <env name="ENV_PROTUBE_STORE_DIR" value="C:\Users\AinaBarnet\Desktop\LS2-protube\store" />
+      <env name="ENV_PROTUBE_GOOGLE_CLIENT_ID" value="24438372161-eqf7bjqcfmgcg7vpj4fovds0g8869ge2.apps.googleusercontent.com" />
+      <env name="ENV_PROTUBE_GOOGLE_CLIENT_SECRET" value="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" />
+      <env name="ENV_PROTUBE_JWT_SECRET" value="QgNKOkss0g5bTAPjj0A/VukQ+8dOT5Oy8fisoqTuAsM=" />
+        <env name="ENV_PROTUBE_STORE_DIR" value="C:\Users\AinaBarnet\Desktop\LS2-protube\store" />
     </envs>
     <module name="protube-back" />
     <option name="SPRING_BOOT_MAIN_CLASS" value="com.tecnocampus.LS2.protube_back.ProtubeBackApplication" />

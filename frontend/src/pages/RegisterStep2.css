@@ -1,0 +1,116 @@
+/* RegisterStep2.css - Styled to match LoginModal aesthetic */
+
+.step-indicator {
+  color: #64b5f6;
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin: 0 0 0.25rem 0;
+  text-align: center;
+}
+
+.user-info {
+  color: #aaa;
+  font-size: 0.9rem;
+  margin: 0 0 2rem 0;
+  text-align: center;
+}
+
+.user-info strong {
+  color: #64b5f6;
+}
+
+.password-input-wrapper {
+  position: relative;
+}
+
+.password-input-wrapper input {
+  width: 100%;
+  padding-right: 3rem;
+}
+
+.toggle-password {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.25rem;
+  padding: 0.25rem;
+  opacity: 0.6;
+  transition: opacity 0.2s ease;
+  color: #f5f5f5;
+}
+
+.toggle-password:hover {
+  opacity: 1;
+}
+
+.password-strength {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.strength-bar {
+  flex: 1;
+  height: 4px;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.strength-fill {
+  height: 100%;
+  transition: all 0.3s ease;
+  border-radius: 2px;
+}
+
+.password-requirements {
+  list-style: none;
+  padding: 0;
+  margin: 0.5rem 0 0 0;
+  font-size: 0.85rem;
+  color: #999;
+}
+
+.password-requirements li {
+  padding: 0.15rem 0;
+  transition: color 0.2s ease;
+}
+
+.password-requirements li.valid {
+  color: #10b981;
+  font-weight: 600;
+}
+
+.error-hint {
+  color: #ff5252;
+  font-size: 0.85rem;
+  margin-top: 0.25rem;
+  display: block;
+}
+
+.success-hint {
+  color: #10b981;
+  font-size: 0.85rem;
+  margin-top: 0.25rem;
+  display: block;
+  font-weight: 600;
+}
+
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.75rem;
+}
+
+.form-actions .secondary-button {
+  flex: 1;
+}
+
+.form-actions .register-button {
+  flex: 2;
+}

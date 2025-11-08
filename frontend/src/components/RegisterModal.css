@@ -1,4 +1,4 @@
-/* LoginModal.css and RegisterModal.css should be identical */
+/* RegisterModal.css - Matching LoginModal.css aesthetic */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -40,6 +40,8 @@
   animation: slideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8),
     0 0 0 1px rgba(255, 255, 255, 0.1);
+  display: flex;
+  flex-direction: column;
 }
 
 .modal-content h2 {
@@ -117,9 +119,8 @@
   background: rgba(255, 255, 255, 0.1);
 }
 
-.login-button,
-.secondary-button,
-.google-login-button {
+.register-button,
+.secondary-button {
   width: 100%;
   padding: 1rem;
   border: none;
@@ -131,19 +132,19 @@
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.login-button {
+.register-button {
   background: linear-gradient(135deg, #1976d2 0%, #2196f3 100%);
   color: white;
   box-shadow: 0 4px 15px rgba(25, 118, 210, 0.3);
 }
 
-.login-button:hover {
+.register-button:hover {
   background: linear-gradient(135deg, #1565c0 0%, #1976d2 100%);
   transform: translateY(-2px);
   box-shadow: 0 6px 25px rgba(25, 118, 210, 0.5);
 }
 
-.login-button:disabled {
+.register-button:disabled {
   background: linear-gradient(135deg, #999 0%, #bbb 100%);
   cursor: not-allowed;
   transform: none;
@@ -163,30 +164,6 @@
   box-shadow: 0 6px 25px rgba(25, 118, 210, 0.4);
 }
 
-.google-login-button {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.08) 100%);
-  color: #f0f0f0;
-  border: 2px solid rgba(255, 255, 255, 0.15);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-}
-
-.google-login-button:hover {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.15) 100%);
-  border-color: rgba(255, 255, 255, 0.3);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-}
-
-.google-icon {
-  width: 20px;
-  height: 20px;
-  flex-shrink: 0;
-}
-
 .error-message {
   background: linear-gradient(135deg, rgba(255, 82, 82, 0.15) 0%, rgba(255, 68, 68, 0.2) 100%);
   border: 2px solid rgba(255, 82, 82, 0.4);
@@ -198,33 +175,6 @@
   font-weight: 600;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-}
-
-.separator {
-  text-align: center;
-  margin: 1.5rem 0;
-  color: #aaa;
-  position: relative;
-  font-weight: 500;
-  font-size: 0.9rem;
-}
-
-.separator::before,
-.separator::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  width: 42%;
-  height: 2px;
-  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.2) 50%, transparent 100%);
-}
-
-.separator::before {
-  left: 0;
-}
-
-.separator::after {
-  right: 0;
 }
 
 @keyframes slideIn {

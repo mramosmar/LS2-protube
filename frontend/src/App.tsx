@@ -6,6 +6,7 @@ import Header from './components/Header';
 import VideoGrid from './components/VideoGrid';
 import LoginModal from './components/LoginModal';
 import { getRelatedVideos } from './utils/videoRecommendations';
+import RegisterModal from './components/RegisterModal';
 
 export interface Video {
   id: number;
@@ -31,6 +32,7 @@ function App() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showRegisterModal, setShowRegisterModal] = useState(false);
   const { loading, message, value: videos } = useAllVideos();
 
   // Handler for search that returns to grid view
@@ -58,7 +60,7 @@ function App() {
   const categories = useMemo(() => {
     if (!videos) return [];
     const allCategories = videos.flatMap((video) => video.meta?.categories || []);
-    return ['all', ...new Set(allCategories)];
+    return ['all', ...Array.from(new Set(allCategories))];
   }, [videos]);
 
   // Filter videos based on search and category
@@ -98,12 +100,42 @@ function App() {
     setPreviousVideo(null); // Clear previous video when going back
   };
 
-  const handleLoginClick = () => {
-    setShowLoginModal(true);
+  const handleLogin = async (username: string, password: string) => {
+    try {
+      console.log('Login attempt:', username, password);
+      setShowLoginModal(false);
+    } catch (error) {
+      console.error('Error during login:', error);
+    }
   };
 
-  const handleCloseModal = () => {
+  const handleRegister = async (username: string, password: string, email: string) => {
+    try {
+      console.log('Register attempt:', username, password, email);
+      setShowRegisterModal(false);
+      setShowLoginModal(true);
+    } catch (error) {
+      console.error('Error during registration:', error);
+    }
+  };
+
+  // Open modal handlers
+  const handleLoginClick = () => setShowLoginModal(true);
+  const handleRegisterClick = () => setShowRegisterModal(true);
+
+  // Close modal handlers
+  const handleCloseLoginModal = () => setShowLoginModal(false);
+  const handleCloseRegisterModal = () => setShowRegisterModal(false);
+
+  // Switch between modals handlers
+  const switchToRegister = () => {
     setShowLoginModal(false);
+    setShowRegisterModal(true);
+  };
+
+  const switchToLogin = () => {
+    setShowRegisterModal(false);
+    setShowLoginModal(true);
   };
 
   return (
@@ -139,11 +171,15 @@ function App() {
       </main>
       {showLoginModal && (
         <LoginModal
-          onClose={handleCloseModal} // Pass the function to close the modal
-          onLogin={(username, password) => {
-            console.log('Login attempt:', username, password);
-            setShowLoginModal(false);
-          }}
+          onClose={handleCloseLoginModal}
+          onSwitchToRegister={switchToRegister} // Changed from setShowRegisterModal
+        />
+      )}
+
+      {showRegisterModal && (
+        <RegisterModal
+          onClose={handleCloseRegisterModal}
+          onSwitchToLogin={switchToLogin} // Changed from onLoginClick
         />
       )}
     </div>
