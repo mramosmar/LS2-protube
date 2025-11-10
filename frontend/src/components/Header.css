@@ -22,23 +22,27 @@
 }
 
 .header-left {
-  flex: 0 0 auto;
+  flex: 1;
   margin-left: 48px;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
 }
 
 .header-center {
   flex: 1;
-  max-width: 640px;
-  margin: 0 40px;
+  width: 500px;
+  margin: 0 auto;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
 }
 
 .header-right {
-  flex: 0 0 auto;
+  flex: 1;
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 16px;
 }
 

@@ -33,7 +33,7 @@ function App() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showRegisterModal, setShowRegisterModal] = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(typeof window !== 'undefined' ? window.innerWidth <= 1024 : false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
   const { loading, message, value: videos } = useAllVideos();
   const navigate = useNavigate();
 
