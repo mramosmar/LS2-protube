@@ -1,4 +1,4 @@
-package com.tecnocampus.LS2.protube_back.controller;
+package com.tecnocampus.LS2.protube_back.api;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

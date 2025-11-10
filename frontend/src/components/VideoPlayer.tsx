@@ -1,28 +1,156 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Video } from '../App';
 import VideoThumbnailHybrid from './VideoThumbnailHybrid';
 import './VideoPlayer.css';
+import { calculateTitleSimilarity } from '../utils/videoRecommendations';
 
 interface VideoPlayerProps {
   video: Video;
   onBack: () => void;
   relatedVideos: Video[];
   onVideoSelect: (video: Video) => void;
+  selectedCategory: string;
 }
 
-const VideoPlayer = ({ video, onBack, relatedVideos, onVideoSelect }: VideoPlayerProps) => {
+const VideoPlayer = ({ video, onBack, relatedVideos, onVideoSelect, selectedCategory }: VideoPlayerProps) => {
   const [showFullDescription, setShowFullDescription] = useState(false);
 
-  // Function to format duration
-  const formatDuration = (seconds: number): string => {
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  // Filter related videos by selected category if needed
+  const filteredRelatedVideos = useMemo(() => {
+    if (selectedCategory === 'all') {
+      return relatedVideos;
+    }
+    return relatedVideos.filter((v) => v.meta?.categories?.includes(selectedCategory));
+  }, [relatedVideos, selectedCategory]);
+
+  // Get all videos without category filter for "others" section
+  const allRelatedVideos = useMemo(() => {
+    return relatedVideos;
+  }, [relatedVideos]);
+
+  // Group related videos by relationship type
+  const groupedRelatedVideos = useMemo(() => {
+    const groups: {
+      sameAuthor: Video[];
+      sameCategory: Video[];
+      similarTitle: Video[];
+      others: Video[];
+    } = {
+      sameAuthor: [],
+      sameCategory: [],
+      similarTitle: [],
+      others: [],
+    };
+
+    // Crear un array con los videos y su puntuación de similitud de título
+    const videosWithTitleScore = filteredRelatedVideos.map((relatedVideo) => ({
+      video: relatedVideo,
+      titleScore: calculateTitleSimilarity(video, relatedVideo),
+    }));
+
+    // También calcular similitud para TODOS los videos (sin filtro de categoría) para "Otros similares"
+    const allVideosWithTitleScore = allRelatedVideos.map((relatedVideo) => ({
+      video: relatedVideo,
+      titleScore: calculateTitleSimilarity(video, relatedVideo),
+    }));
+
+    videosWithTitleScore.forEach(({ video: relatedVideo, titleScore }) => {
+      // Categorizar por tipo de relación (prioridad)
+      if (relatedVideo.user.toLowerCase() === video.user.toLowerCase()) {
+        groups.sameAuthor.push(relatedVideo);
+      } else if (
+        video.meta?.categories?.some((cat) =>
+          relatedVideo.meta?.categories?.some((cat2) => cat2.toLowerCase() === cat.toLowerCase())
+        )
+      ) {
+        groups.sameCategory.push(relatedVideo);
+      } else if (titleScore > 0) {
+        // Si hay palabras en común en el título, va a similarTitle
+        groups.similarTitle.push(relatedVideo);
+      } else {
+        groups.others.push(relatedVideo);
+      }
+    });
+
+    // Agregar a "similarTitle" videos de TODAS las categorías que tengan similitud de título
+    // pero que no estén ya incluidos en otros grupos
+    const alreadyInGroups = new Set([
+      video.id,
+      ...groups.sameAuthor.map((v) => v.id),
+      ...groups.sameCategory.map((v) => v.id),
+      ...groups.similarTitle.map((v) => v.id),
+      ...groups.others.map((v) => v.id),
+    ]);
+
+    allVideosWithTitleScore.forEach(({ video: relatedVideo, titleScore }) => {
+      if (titleScore > 0 && !alreadyInGroups.has(relatedVideo.id)) {
+        groups.similarTitle.push(relatedVideo);
+        alreadyInGroups.add(relatedVideo.id);
+      }
+    });
+
+    // Obtener IDs de videos ya clasificados
+    const alreadyIncludedIds = new Set([
+      video.id,
+      ...groups.sameAuthor.map((v) => v.id),
+      ...groups.sameCategory.map((v) => v.id),
+      ...groups.similarTitle.map((v) => v.id),
+      ...groups.others.map((v) => v.id),
+    ]);
+
+    // Crear lista de videos sobrantes (de todas las categorías)
+    const remainingVideos = allRelatedVideos.filter((v) => !alreadyIncludedIds.has(v.id));
+
+    // Ordenar aleatoriamente los videos sobrantes usando hash
+    remainingVideos.sort((a, b) => {
+      const seed = video.id * 2654435761;
+      const hashA = ((a.id ^ seed) * 1103515245 + 12345) % 2147483647;
+      const hashB = ((b.id ^ seed) * 1103515245 + 12345) % 2147483647;
+      return hashB - hashA;
+    });
+
+    // Seleccionar videos aleatorios de los sobrantes
+    groups.others = remainingVideos.slice(0, 5);
+    groups.similarTitle.sort((a, b) => {
+      const scoreA = calculateTitleSimilarity(video, a);
+      const scoreB = calculateTitleSimilarity(video, b);
+      if (scoreB !== scoreA) {
+        return scoreB - scoreA;
+      }
+      // Si tienen la misma puntuación, ordenar de manera pseudo-aleatoria determinista
+      const hashA = (a.id * 7919 + video.id * 6151) % 233280;
+      const hashB = (b.id * 7919 + video.id * 6151) % 233280;
+      return hashB - hashA;
+    });
+
+    // Los videos en "others" ya están seleccionados (3 aleatorios), no necesitan más ordenamiento
+
+    return groups;
+  }, [video, filteredRelatedVideos, allRelatedVideos]);
+
+  // Función para obtener el badge de relación
+  const getRelationBadge = (relatedVideo: Video): { text: string; className: string } | null => {
+    if (relatedVideo.user.toLowerCase() === video.user.toLowerCase()) {
+      return { text: 'Mismo autor', className: 'badge-author' };
+    }
+
+    const commonCategories =
+      video.meta?.categories?.filter((cat) =>
+        relatedVideo.meta?.categories?.some((cat2) => cat2.toLowerCase() === cat.toLowerCase())
+      ) || [];
+
+    if (commonCategories.length > 0) {
+      return { text: commonCategories[0], className: 'badge-category' };
+    }
+
+    return null;
   };
 
-  // Function to format view count
+  // Function to format view count (deterministic based on video ID)
   const formatViews = (id: number): string => {
-    const views = Math.floor(Math.random() * 1000000) + id * 1000;
+    // Generate deterministic value using a simple hash function
+    const seed = (id * 9301 + 49297) % 233280;
+    const views = (seed % 1000000) + id * 1000;
     if (views > 1000000) {
       return `${(views / 1000000).toFixed(1)}M visualizaciones`;
     } else if (views > 1000) {
@@ -32,7 +160,9 @@ const VideoPlayer = ({ video, onBack, relatedVideos, onVideoSelect }: VideoPlaye
   };
 
   const getUploadTime = (id: number): string => {
-    const days = Math.floor(Math.random() * 365) + 1;
+    // Generate deterministic value using a simple hash function
+    const seed = (id * 8121 + 28411) % 233280;
+    const days = (seed % 365) + 1;
     if (days > 30) {
       const months = Math.floor(days / 30);
       return `hace ${months} ${months === 1 ? 'mes' : 'meses'}`;
@@ -41,7 +171,9 @@ const VideoPlayer = ({ video, onBack, relatedVideos, onVideoSelect }: VideoPlaye
   };
 
   const getLikes = (id: number): string => {
-    const likes = Math.floor(Math.random() * 50000) + id * 100;
+    // Generate deterministic value using a simple hash function
+    const seed = (id * 7919 + 37199) % 233280;
+    const likes = (seed % 50000) + id * 100;
     if (likes > 1000) {
       return `${(likes / 1000).toFixed(1)}K`;
     }
@@ -118,7 +250,9 @@ const VideoPlayer = ({ video, onBack, relatedVideos, onVideoSelect }: VideoPlaye
               <div className="channel-avatar">{video.user.charAt(0).toUpperCase()}</div>
               <div className="channel-details">
                 <h3 className="channel-name">{video.user}</h3>
-                <p className="channel-subscribers">{Math.floor(Math.random() * 1000)}K suscriptores</p>
+                <p className="channel-subscribers">
+                  {Math.floor(((video.id * 6151 + 21377) % 233280) % 1000)}K suscriptores
+                </p>
               </div>
             </div>
             <button className="subscribe-button">Suscribirse</button>
@@ -174,18 +308,97 @@ const VideoPlayer = ({ video, onBack, relatedVideos, onVideoSelect }: VideoPlaye
       <div className="video-sidebar">
         <h3 className="sidebar-title">Videos relacionados</h3>
         <div className="related-videos">
-          {relatedVideos.map((relatedVideo) => (
-            <div key={relatedVideo.id} className="related-video" onClick={() => onVideoSelect(relatedVideo)}>
-              <div className="related-thumbnail">
-                <VideoThumbnailHybrid video={relatedVideo} size="small" showCategory={false} useRealImages={true} />
-              </div>
-              <div className="related-info">
-                <h4 className="related-title">{relatedVideo.title}</h4>
-                <p className="related-user">{relatedVideo.user}</p>
-                <p className="related-views">{formatViews(relatedVideo.id)}</p>
-              </div>
-            </div>
-          ))}
+          {/* Videos del mismo autor */}
+          {groupedRelatedVideos.sameAuthor.length > 0 && (
+            <>
+              <div className="related-section-title">Del mismo autor</div>
+              {groupedRelatedVideos.sameAuthor.map((relatedVideo) => {
+                const badge = getRelationBadge(relatedVideo);
+                return (
+                  <div key={relatedVideo.id} className="related-video" onClick={() => onVideoSelect(relatedVideo)}>
+                    <div className="related-thumbnail">
+                      <VideoThumbnailHybrid video={relatedVideo} size="small" showCategory={false} />
+                    </div>
+                    <div className="related-info">
+                      <h4 className="related-title">{relatedVideo.title}</h4>
+                      <p className="related-user">{relatedVideo.user}</p>
+                      <p className="related-views">{formatViews(relatedVideo.id)}</p>
+                      {badge && <span className={`relation-badge ${badge.className}`}>{badge.text}</span>}
+                    </div>
+                  </div>
+                );
+              })}
+            </>
+          )}
+
+          {/* Videos de la misma categoría */}
+          {groupedRelatedVideos.sameCategory.length > 0 && (
+            <>
+              <div className="related-section-title">De categorías similares</div>
+              {groupedRelatedVideos.sameCategory.map((relatedVideo) => {
+                const badge = getRelationBadge(relatedVideo);
+                return (
+                  <div key={relatedVideo.id} className="related-video" onClick={() => onVideoSelect(relatedVideo)}>
+                    <div className="related-thumbnail">
+                      <VideoThumbnailHybrid video={relatedVideo} size="small" showCategory={false} />
+                    </div>
+                    <div className="related-info">
+                      <h4 className="related-title">{relatedVideo.title}</h4>
+                      <p className="related-user">{relatedVideo.user}</p>
+                      <p className="related-views">{formatViews(relatedVideo.id)}</p>
+                      {badge && <span className={`relation-badge ${badge.className}`}>{badge.text}</span>}
+                    </div>
+                  </div>
+                );
+              })}
+            </>
+          )}
+
+          {/* Videos con títulos similares */}
+          {groupedRelatedVideos.similarTitle.length > 0 && (
+            <>
+              <div className="related-section-title">Otros similares</div>
+              {groupedRelatedVideos.similarTitle.map((relatedVideo) => {
+                const badge = getRelationBadge(relatedVideo);
+                return (
+                  <div key={relatedVideo.id} className="related-video" onClick={() => onVideoSelect(relatedVideo)}>
+                    <div className="related-thumbnail">
+                      <VideoThumbnailHybrid video={relatedVideo} size="small" showCategory={false} />
+                    </div>
+                    <div className="related-info">
+                      <h4 className="related-title">{relatedVideo.title}</h4>
+                      <p className="related-user">{relatedVideo.user}</p>
+                      <p className="related-views">{formatViews(relatedVideo.id)}</p>
+                      {badge && <span className={`relation-badge ${badge.className}`}>{badge.text}</span>}
+                    </div>
+                  </div>
+                );
+              })}
+            </>
+          )}
+
+          {/* Otros videos */}
+          {groupedRelatedVideos.others.length > 0 && (
+            <>
+              <div className="related-section-title">Otros</div>
+              {groupedRelatedVideos.others.map((relatedVideo) => {
+                const badge = getRelationBadge(relatedVideo);
+                return (
+                  <div key={relatedVideo.id} className="related-video" onClick={() => onVideoSelect(relatedVideo)}>
+                    <div className="related-thumbnail">
+                      <VideoThumbnailHybrid video={relatedVideo} size="small" showCategory={false} />
+                    </div>
+                    <div className="related-info">
+                      <h4 className="related-title">{relatedVideo.title}</h4>
+                      <p className="related-user">{relatedVideo.user}</p>
+                      <p className="related-views">{formatViews(relatedVideo.id)}</p>
+                      {badge && <span className={`relation-badge ${badge.className}`}>{badge.text}</span>}
+                    </div>
+                  </div>
+                );
+              })}
+            </>
+          )}
         </div>
       </div>
     </div>

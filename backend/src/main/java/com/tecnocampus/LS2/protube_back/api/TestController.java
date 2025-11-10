@@ -1,4 +1,4 @@
-package com.tecnocampus.LS2.protube_back.controller;
+package com.tecnocampus.LS2.protube_back.api;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -12,4 +12,7 @@ public class TestController {
     public String sayHello() {
         return "Hello, World!";
     }
-}
+
+    @GetMapping
+    public String test() {return "Backend is working"; }
+    }

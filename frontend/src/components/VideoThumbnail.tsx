@@ -47,6 +47,7 @@ const VideoThumbnail = ({ video, size = 'medium', showCategory = true }: VideoTh
   };
 
   // Generate thumbnail patterns
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const generateThumbnailArt = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -283,7 +284,7 @@ const VideoThumbnail = ({ video, size = 'medium', showCategory = true }: VideoTh
 
   useEffect(() => {
     generateThumbnailArt();
-  }, [video.id, video.title, video.user]);
+  }, [generateThumbnailArt, video.id, video.title, video.user]);
 
   const getSizeClasses = () => {
     switch (size) {
