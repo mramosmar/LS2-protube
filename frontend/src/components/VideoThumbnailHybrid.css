@@ -49,9 +49,34 @@
   opacity: 1;
 }
 
-.thumbnail-image.loaded + .thumbnail-loading {
+.thumbnail-image.loaded+.thumbnail-loading {
   opacity: 0;
   pointer-events: none;
+}
+
+.thumbnail-image.hidden {
+  opacity: 0;
+}
+
+.thumbnail-video {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 2;
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 .thumbnail-overlay {
@@ -108,6 +133,11 @@
 
 /* Hover effects */
 .video-thumbnail-hybrid:hover .thumbnail-image {
+  transform: scale(1.08);
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.video-thumbnail-hybrid.hovering .thumbnail-video {
   transform: scale(1.08);
   transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
