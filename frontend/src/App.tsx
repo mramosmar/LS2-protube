@@ -6,6 +6,7 @@ import Header from './components/Header';
 import VideoGrid from './components/VideoGrid';
 import LoginModal from './components/LoginModal';
 import { getRelatedVideos } from './utils/videoRecommendations';
+import RegisterModal from './components/RegisterModal.tsx';
 
 export interface Video {
   id: number;
@@ -56,11 +57,11 @@ function App() {
   };
 
   // Get unique categories from videos
-    const categories = useMemo(() => {
-        if (!videos) return [];
-        const allCategories = videos.flatMap((video) => video.meta?.categories || []);
-        return ['all', ...Array.from(new Set(allCategories))];
-    }, [videos]);
+  const categories = useMemo(() => {
+    if (!videos) return [];
+    const allCategories = videos.flatMap((video) => video.meta?.categories || []);
+    return ['all', ...Array.from(new Set(allCategories))];
+  }, [videos]);
 
   // Filter videos based on search and category
   const filteredVideos = useMemo(() => {
@@ -99,43 +100,23 @@ function App() {
     setPreviousVideo(null); // Clear previous video when going back
   };
 
-    const handleLogin = async (username: string, password: string) => {
-        try {
-            console.log('Login attempt:', username, password);
-            setShowLoginModal(false);
-        } catch (error) {
-            console.error('Error during login:', error);
-        }
-    };
+  // Open modal handlers
+  const handleLoginClick = () => setShowLoginModal(true);
 
-    const handleRegister = async (username: string, password: string, email: string) => {
-        try {
-            console.log('Register attempt:', username, password, email);
-            setShowRegisterModal(false);
-            setShowLoginModal(true);
-        } catch (error) {
-            console.error('Error during registration:', error);
-        }
-    };
+  // Close modal handlers
+  const handleCloseLoginModal = () => setShowLoginModal(false);
+  const handleCloseRegisterModal = () => setShowRegisterModal(false);
 
-    // Open modal handlers
-    const handleLoginClick = () => setShowLoginModal(true);
-    const handleRegisterClick = () => setShowRegisterModal(true);
+  // Switch between modals handlers
+  const switchToRegister = () => {
+    setShowLoginModal(false);
+    setShowRegisterModal(true);
+  };
 
-// Close modal handlers
-    const handleCloseLoginModal = () => setShowLoginModal(false);
-    const handleCloseRegisterModal = () => setShowRegisterModal(false);
-
-// Switch between modals handlers
-    const switchToRegister = () => {
-        setShowLoginModal(false);
-        setShowRegisterModal(true);
-    };
-
-    const switchToLogin = () => {
-        setShowRegisterModal(false);
-        setShowLoginModal(true);
-    };
+  const switchToLogin = () => {
+    setShowRegisterModal(false);
+    setShowLoginModal(true);
+  };
 
   return (
     <div className="App">
@@ -168,19 +149,19 @@ function App() {
           />
         )}
       </main>
-        {showLoginModal && (
-            <LoginModal
-                onClose={handleCloseLoginModal}
-                onSwitchToRegister={switchToRegister}  // Changed from setShowRegisterModal
-            />
-        )}
+      {showLoginModal && (
+        <LoginModal
+          onClose={handleCloseLoginModal}
+          onSwitchToRegister={switchToRegister} // Changed from setShowRegisterModal
+        />
+      )}
 
-        {showRegisterModal && (
-            <RegisterModal
-                onClose={handleCloseRegisterModal}
-                onSwitchToLogin={switchToLogin}  // Changed from onLoginClick
-            />
-        )}
+      {showRegisterModal && (
+        <RegisterModal
+          onClose={handleCloseRegisterModal}
+          onSwitchToLogin={switchToLogin} // Changed from onLoginClick
+        />
+      )}
     </div>
   );
 }
@@ -255,13 +236,6 @@ function ContentApp({ loading, message, videos, onVideoSelect, searchTerm, selec
         </div>
       );
   }
-}
-
-// Función para formatear la duración en minutos:segundos
-function formatDuration(seconds: number): string {
-  const mins = Math.floor(seconds / 60);
-  const secs = Math.floor(seconds % 60);
-  return `${mins}:${secs.toString().padStart(2, '0')}`;
 }
 
 export default App;

@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { Video } from '../App';
 import VideoThumbnailHybrid from './VideoThumbnailHybrid';
 import './VideoPlayer.css';
-import { calculateSimilarity, calculateTitleSimilarity } from '../utils/videoRecommendations';
+import { calculateTitleSimilarity } from '../utils/videoRecommendations';
 
 interface VideoPlayerProps {
   video: Video;
@@ -20,7 +20,7 @@ const VideoPlayer = ({ video, onBack, relatedVideos, onVideoSelect, selectedCate
     if (selectedCategory === 'all') {
       return relatedVideos;
     }
-    return relatedVideos.filter(v => v.meta?.categories?.includes(selectedCategory));
+    return relatedVideos.filter((v) => v.meta?.categories?.includes(selectedCategory));
   }, [relatedVideos, selectedCategory]);
 
   // Get all videos without category filter for "others" section
@@ -39,28 +39,30 @@ const VideoPlayer = ({ video, onBack, relatedVideos, onVideoSelect, selectedCate
       sameAuthor: [],
       sameCategory: [],
       similarTitle: [],
-      others: []
+      others: [],
     };
 
     // Crear un array con los videos y su puntuación de similitud de título
-    const videosWithTitleScore = filteredRelatedVideos.map(relatedVideo => ({
+    const videosWithTitleScore = filteredRelatedVideos.map((relatedVideo) => ({
       video: relatedVideo,
-      titleScore: calculateTitleSimilarity(video, relatedVideo)
+      titleScore: calculateTitleSimilarity(video, relatedVideo),
     }));
 
     // También calcular similitud para TODOS los videos (sin filtro de categoría) para "Otros similares"
-    const allVideosWithTitleScore = allRelatedVideos.map(relatedVideo => ({
+    const allVideosWithTitleScore = allRelatedVideos.map((relatedVideo) => ({
       video: relatedVideo,
-      titleScore: calculateTitleSimilarity(video, relatedVideo)
+      titleScore: calculateTitleSimilarity(video, relatedVideo),
     }));
 
     videosWithTitleScore.forEach(({ video: relatedVideo, titleScore }) => {
       // Categorizar por tipo de relación (prioridad)
       if (relatedVideo.user.toLowerCase() === video.user.toLowerCase()) {
         groups.sameAuthor.push(relatedVideo);
-      } else if (video.meta?.categories?.some(cat =>
-        relatedVideo.meta?.categories?.some(cat2 => cat2.toLowerCase() === cat.toLowerCase())
-      )) {
+      } else if (
+        video.meta?.categories?.some((cat) =>
+          relatedVideo.meta?.categories?.some((cat2) => cat2.toLowerCase() === cat.toLowerCase())
+        )
+      ) {
         groups.sameCategory.push(relatedVideo);
       } else if (titleScore > 0) {
         // Si hay palabras en común en el título, va a similarTitle
@@ -74,10 +76,10 @@ const VideoPlayer = ({ video, onBack, relatedVideos, onVideoSelect, selectedCate
     // pero que no estén ya incluidos en otros grupos
     const alreadyInGroups = new Set([
       video.id,
-      ...groups.sameAuthor.map(v => v.id),
-      ...groups.sameCategory.map(v => v.id),
-      ...groups.similarTitle.map(v => v.id),
-      ...groups.others.map(v => v.id)
+      ...groups.sameAuthor.map((v) => v.id),
+      ...groups.sameCategory.map((v) => v.id),
+      ...groups.similarTitle.map((v) => v.id),
+      ...groups.others.map((v) => v.id),
     ]);
 
     allVideosWithTitleScore.forEach(({ video: relatedVideo, titleScore }) => {
@@ -90,14 +92,14 @@ const VideoPlayer = ({ video, onBack, relatedVideos, onVideoSelect, selectedCate
     // Obtener IDs de videos ya clasificados
     const alreadyIncludedIds = new Set([
       video.id,
-      ...groups.sameAuthor.map(v => v.id),
-      ...groups.sameCategory.map(v => v.id),
-      ...groups.similarTitle.map(v => v.id),
-      ...groups.others.map(v => v.id)
+      ...groups.sameAuthor.map((v) => v.id),
+      ...groups.sameCategory.map((v) => v.id),
+      ...groups.similarTitle.map((v) => v.id),
+      ...groups.others.map((v) => v.id),
     ]);
 
     // Crear lista de videos sobrantes (de todas las categorías)
-    const remainingVideos = allRelatedVideos.filter(v => !alreadyIncludedIds.has(v.id));
+    const remainingVideos = allRelatedVideos.filter((v) => !alreadyIncludedIds.has(v.id));
 
     // Ordenar aleatoriamente los videos sobrantes usando hash
     remainingVideos.sort((a, b) => {
@@ -132,22 +134,16 @@ const VideoPlayer = ({ video, onBack, relatedVideos, onVideoSelect, selectedCate
       return { text: 'Mismo autor', className: 'badge-author' };
     }
 
-    const commonCategories = video.meta?.categories?.filter(cat =>
-      relatedVideo.meta?.categories?.some(cat2 => cat2.toLowerCase() === cat.toLowerCase())
-    ) || [];
+    const commonCategories =
+      video.meta?.categories?.filter((cat) =>
+        relatedVideo.meta?.categories?.some((cat2) => cat2.toLowerCase() === cat.toLowerCase())
+      ) || [];
 
     if (commonCategories.length > 0) {
       return { text: commonCategories[0], className: 'badge-category' };
     }
 
     return null;
-  };
-
-  // Function to format duration
-  const formatDuration = (seconds: number): string => {
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
   // Function to format view count (deterministic based on video ID)
@@ -254,7 +250,9 @@ const VideoPlayer = ({ video, onBack, relatedVideos, onVideoSelect, selectedCate
               <div className="channel-avatar">{video.user.charAt(0).toUpperCase()}</div>
               <div className="channel-details">
                 <h3 className="channel-name">{video.user}</h3>
-                <p className="channel-subscribers">{Math.floor(((video.id * 6151 + 21377) % 233280) % 1000)}K suscriptores</p>
+                <p className="channel-subscribers">
+                  {Math.floor(((video.id * 6151 + 21377) % 233280) % 1000)}K suscriptores
+                </p>
               </div>
             </div>
             <button className="subscribe-button">Suscribirse</button>
@@ -319,7 +317,7 @@ const VideoPlayer = ({ video, onBack, relatedVideos, onVideoSelect, selectedCate
                 return (
                   <div key={relatedVideo.id} className="related-video" onClick={() => onVideoSelect(relatedVideo)}>
                     <div className="related-thumbnail">
-                      <VideoThumbnailHybrid video={relatedVideo} size="small" showCategory={false} useRealImages={true} />
+                      <VideoThumbnailHybrid video={relatedVideo} size="small" showCategory={false} />
                     </div>
                     <div className="related-info">
                       <h4 className="related-title">{relatedVideo.title}</h4>
@@ -342,7 +340,7 @@ const VideoPlayer = ({ video, onBack, relatedVideos, onVideoSelect, selectedCate
                 return (
                   <div key={relatedVideo.id} className="related-video" onClick={() => onVideoSelect(relatedVideo)}>
                     <div className="related-thumbnail">
-                      <VideoThumbnailHybrid video={relatedVideo} size="small" showCategory={false} useRealImages={true} />
+                      <VideoThumbnailHybrid video={relatedVideo} size="small" showCategory={false} />
                     </div>
                     <div className="related-info">
                       <h4 className="related-title">{relatedVideo.title}</h4>
@@ -365,7 +363,7 @@ const VideoPlayer = ({ video, onBack, relatedVideos, onVideoSelect, selectedCate
                 return (
                   <div key={relatedVideo.id} className="related-video" onClick={() => onVideoSelect(relatedVideo)}>
                     <div className="related-thumbnail">
-                      <VideoThumbnailHybrid video={relatedVideo} size="small" showCategory={false} useRealImages={true} />
+                      <VideoThumbnailHybrid video={relatedVideo} size="small" showCategory={false} />
                     </div>
                     <div className="related-info">
                       <h4 className="related-title">{relatedVideo.title}</h4>
@@ -388,7 +386,7 @@ const VideoPlayer = ({ video, onBack, relatedVideos, onVideoSelect, selectedCate
                 return (
                   <div key={relatedVideo.id} className="related-video" onClick={() => onVideoSelect(relatedVideo)}>
                     <div className="related-thumbnail">
-                      <VideoThumbnailHybrid video={relatedVideo} size="small" showCategory={false} useRealImages={true} />
+                      <VideoThumbnailHybrid video={relatedVideo} size="small" showCategory={false} />
                     </div>
                     <div className="related-info">
                       <h4 className="related-title">{relatedVideo.title}</h4>

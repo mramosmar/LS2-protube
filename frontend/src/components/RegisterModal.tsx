@@ -35,7 +35,9 @@ const RegisterModal: React.FC<RegisterModalProps> = ({ onClose, onSwitchToLogin 
   return (
     <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="modal-content">
-        <button className="close-button" onClick={onClose} aria-label="Tancar">×</button>
+        <button className="close-button" onClick={onClose} aria-label="Tancar">
+          ×
+        </button>
         {step === 1 ? (
           <RegisterStep1 onNext={handleStep1Complete} onSwitchToLogin={onSwitchToLogin} />
         ) : (

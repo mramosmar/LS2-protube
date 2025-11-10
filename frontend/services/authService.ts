@@ -21,37 +21,37 @@ interface UserDTO {
 const API_URL = 'http://localhost:8080/api'; // adjust to match your backend URL
 
 export const authService = {
-    async login(data: UserLoginDTO): Promise<UserDTO> {
-        const response = await fetch(`${API_URL}/users/login`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(data),
-            credentials: 'include'
-        });
+  async login(data: UserLoginDTO): Promise<UserDTO> {
+    const response = await fetch(`${API_URL}/users/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+      credentials: 'include',
+    });
 
-        const result = await response.json();
-        if (!response.ok) {
-            throw new Error(result.error || 'Login failed');
-        }
-        return result;
-    },
-
-    async register(data: UserRegistrationDTO): Promise<UserDTO> {
-        const response = await fetch(`${API_URL}/users/register`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(data),
-            credentials: 'include'
-        });
-
-        const result = await response.json();
-        if (!response.ok) {
-            throw new Error(result.error || 'Registration failed');
-        }
-        return result;
+    const result = await response.json();
+    if (!response.ok) {
+      throw new Error(result.error || 'Login failed');
     }
+    return result;
+  },
+
+  async register(data: UserRegistrationDTO): Promise<UserDTO> {
+    const response = await fetch(`${API_URL}/users/register`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+      credentials: 'include',
+    });
+
+    const result = await response.json();
+    if (!response.ok) {
+      throw new Error(result.error || 'Registration failed');
+    }
+    return result;
+  },
 };

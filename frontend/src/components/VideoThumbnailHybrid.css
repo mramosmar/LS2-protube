@@ -49,7 +49,7 @@
   opacity: 1;
 }
 
-.thumbnail-image.loaded+.thumbnail-loading {
+.thumbnail-image.loaded + .thumbnail-loading {
   opacity: 0;
   pointer-events: none;
 }

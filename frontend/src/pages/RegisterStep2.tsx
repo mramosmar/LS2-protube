@@ -43,8 +43,7 @@ const RegisterStep2: React.FC<RegisterStep2Props> = ({ username, email, onBack, 
   };
 
   const passwordStrength = getPasswordStrength(password);
-  const passwordErrors = validatePassword(password);
-
+  validatePassword(password);
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -71,7 +70,7 @@ const RegisterStep2: React.FC<RegisterStep2Props> = ({ username, email, onBack, 
       await authService.register({
         username,
         email,
-        password
+        password,
       });
 
       onComplete();
@@ -124,9 +123,7 @@ const RegisterStep2: React.FC<RegisterStep2Props> = ({ username, email, onBack, 
                   style={{ width: passwordStrength.width, backgroundColor: passwordStrength.color }}
                 />
               </div>
-              <span style={{ color: passwordStrength.color, fontSize: '0.85rem' }}>
-                {passwordStrength.strength}
-              </span>
+              <span style={{ color: passwordStrength.color, fontSize: '0.85rem' }}>{passwordStrength.strength}</span>
             </div>
           )}
 
@@ -140,9 +137,7 @@ const RegisterStep2: React.FC<RegisterStep2Props> = ({ username, email, onBack, 
             <li className={/[a-z]/.test(password) ? 'valid' : ''}>
               {/[a-z]/.test(password) ? '✓' : '○'} Una minúscula
             </li>
-            <li className={/[0-9]/.test(password) ? 'valid' : ''}>
-              {/[0-9]/.test(password) ? '✓' : '○'} Un número
-            </li>
+            <li className={/[0-9]/.test(password) ? 'valid' : ''}>{/[0-9]/.test(password) ? '✓' : '○'} Un número</li>
           </ul>
         </div>
 
