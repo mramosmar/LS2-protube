@@ -365,7 +365,7 @@ const VideoPlayer = ({ video, onBack, relatedVideos, onVideoSelect, selectedCate
                 className="video-preview-tooltip"
                 style={{
                   left: `${previewPosition.x}px`,
-                  top: `${previewPosition.y}px`
+                  top: `${previewPosition.y}px`,
                 }}
               >
                 <div className="preview-video-container">

@@ -8,13 +8,7 @@ interface HeaderProps {
   onLogin: () => void;
 }
 
-const Header = ({
-  searchTerm,
-  onSearchChange,
-  onLogoClick,
-  onLogin,
-}: HeaderProps) => {
-
+const Header = ({ searchTerm, onSearchChange, onLogoClick, onLogin }: HeaderProps) => {
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
   };
