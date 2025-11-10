@@ -81,9 +81,22 @@ function App() {
       .sort((a, b) => a.title.localeCompare(b.title, 'es', { sensitivity: 'base' }));
   }, [videos, searchTerm, selectedCategory]);
 
+  // Helper function to create URL-friendly slug from title
+  const createSlug = (title: string): string => {
+    return title
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '') // Remove accents
+      .replace(/[^\w\s-]/g, '') // Remove special characters
+      .replace(/\s+/g, '-') // Replace spaces with -
+      .replace(/-+/g, '-') // Replace multiple - with single -
+      .trim();
+  };
+
   const handleVideoSelect = (video: Video) => {
-    // Navigate to the video URL
-    navigate(`/video/${video.id}`);
+    // Navigate to the video URL with ID and title slug
+    const slug = createSlug(video.title);
+    navigate(`/video/${video.id}/${slug}`);
   };
 
   const handleBackToGrid = () => {
@@ -141,7 +154,7 @@ function App() {
             }
           />
           <Route
-            path="/video/:videoId"
+            path="/video/:videoId/:videoTitle"
             element={
               <VideoPlayerRoute
                 videos={videos || []}
@@ -178,7 +191,7 @@ interface VideoPlayerRouteProps {
 }
 
 function VideoPlayerRoute({ videos, onBack, onVideoSelect, selectedCategory }: VideoPlayerRouteProps) {
-  const { videoId } = useParams<{ videoId: string }>();
+  const { videoId, videoTitle } = useParams<{ videoId: string; videoTitle: string }>();
   const navigate = useNavigate();
 
   // Find the video by ID
