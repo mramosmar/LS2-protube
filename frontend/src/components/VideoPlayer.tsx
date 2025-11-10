@@ -17,7 +17,11 @@ const VideoPlayer = ({ video, onBack, relatedVideos, onVideoSelect, selectedCate
   const [showEndScreen, setShowEndScreen] = useState(false);
   const [autoplayCountdown, setAutoplayCountdown] = useState(10);
   const [autoplayCancelled, setAutoplayCancelled] = useState(false);
+  const [previewTime, setPreviewTime] = useState<number | null>(null);
+  const [previewPosition, setPreviewPosition] = useState({ x: 0, y: 0 });
   const videoRef = useRef<HTMLVideoElement>(null);
+  const previewVideoRef = useRef<HTMLVideoElement>(null);
+  const progressBarRef = useRef<HTMLDivElement>(null);
   const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Cleanup countdown on unmount or video change
@@ -289,6 +293,52 @@ const VideoPlayer = ({ video, onBack, relatedVideos, onVideoSelect, selectedCate
     return likes.toString();
   };
 
+  // Handle mouse move over video for preview
+  const handleMouseMove = (e: React.MouseEvent<HTMLVideoElement>) => {
+    const videoElement = videoRef.current;
+    if (!videoElement) return;
+
+    const rect = videoElement.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    // Only show preview when hovering near the bottom (progress bar area)
+    const isNearProgressBar = y > rect.height - 80;
+
+    if (!isNearProgressBar) {
+      setPreviewTime(null);
+      return;
+    }
+
+    const percentage = Math.max(0, Math.min(1, x / rect.width));
+    const time = percentage * videoElement.duration;
+
+    if (!isNaN(time)) {
+      setPreviewTime(time);
+      setPreviewPosition({ x: e.clientX, y: rect.bottom });
+
+      // Update preview video time
+      if (previewVideoRef.current) {
+        previewVideoRef.current.currentTime = time;
+      }
+    }
+  };
+
+  const handleMouseLeave = () => {
+    setPreviewTime(null);
+  };
+
+  const formatTime = (seconds: number): string => {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = Math.floor(seconds % 60);
+
+    if (h > 0) {
+      return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+    }
+    return `${m}:${s.toString().padStart(2, '0')}`;
+  };
+
   return (
     <div className="video-player-container">
       <div className="video-player-main">
@@ -303,9 +353,32 @@ const VideoPlayer = ({ video, onBack, relatedVideos, onVideoSelect, selectedCate
               src={`http://localhost:8080/media/${video.id}.mp4`}
               poster={`http://localhost:8080/media/${video.id}.webp`}
               className="video-element"
+              onMouseMove={handleMouseMove}
+              onMouseLeave={handleMouseLeave}
             >
               Tu navegador no soporta la reproducción de video.
             </video>
+
+            {/* Video preview tooltip */}
+            {previewTime !== null && (
+              <div
+                className="video-preview-tooltip"
+                style={{
+                  left: `${previewPosition.x}px`,
+                  top: `${previewPosition.y}px`
+                }}
+              >
+                <div className="preview-video-container">
+                  <video
+                    ref={previewVideoRef}
+                    src={`http://localhost:8080/media/${video.id}.mp4`}
+                    muted
+                    className="preview-video"
+                  />
+                </div>
+                <div className="preview-timestamp">{formatTime(previewTime)}</div>
+              </div>
+            )}
 
             {/* End Screen with Recommended Videos */}
             {showEndScreen && (
