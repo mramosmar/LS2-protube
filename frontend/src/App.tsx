@@ -90,6 +90,7 @@ function App() {
       .replace(/[^\w\s-]/g, '') // Remove special characters
       .replace(/\s+/g, '-') // Replace spaces with -
       .replace(/-+/g, '-') // Replace multiple - with single -
+      .replace(/^-+|-+$/g, '') // Remove leading/trailing -
       .trim();
   };
 
