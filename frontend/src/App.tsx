@@ -1,6 +1,5 @@
 import './App.css';
-import { useMemo, useState, useEffect } from 'react';
-import { Routes, Route, useParams, useNavigate } from 'react-router-dom';
+import { useMemo, useState } from 'react';
 import { useAllVideos } from './useAllVideos';
 import VideoPlayer from './components/VideoPlayer';
 import Header from './components/Header';
@@ -29,24 +28,34 @@ export interface Video {
 }
 
 function App() {
+  const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
+  const [previousVideo, setPreviousVideo] = useState<Video | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showRegisterModal, setShowRegisterModal] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(typeof window !== 'undefined' ? window.innerWidth <= 1024 : false);
   const { loading, message, value: videos } = useAllVideos();
-  const navigate = useNavigate();
 
   // Handler for search that returns to grid view
   const handleSearchChange = (term: string) => {
     setSearchTerm(term);
-    navigate('/');
+    if (selectedVideo && term !== '') {
+      setPreviousVideo(selectedVideo); // Save current video before leaving
+      setSelectedVideo(null); // Return to grid when searching from video player
+    } else if (term === '' && previousVideo && !selectedVideo) {
+      setSelectedVideo(previousVideo); // Restore previous video when clearing search
+      setPreviousVideo(null);
+    }
   };
 
   // Handler for category change that returns to grid view
   const handleCategoryChange = (category: string) => {
     setSelectedCategory(category);
-    navigate('/');
+    if (selectedVideo) {
+      setPreviousVideo(selectedVideo); // Save current video before leaving
+      setSelectedVideo(null); // Return to grid when changing category from video player
+    }
   };
 
   // Get unique categories from videos
@@ -84,11 +93,13 @@ function App() {
   }, [videos, searchTerm, selectedCategory]);
 
   const handleVideoSelect = (video: Video) => {
-    navigate(`/video/${video.id}`);
+    setSelectedVideo(video);
+    setPreviousVideo(null); // Clear previous video when selecting a new one
   };
 
   const handleBackToGrid = () => {
-    navigate('/');
+    setSelectedVideo(null);
+    setPreviousVideo(null); // Clear previous video when going back
   };
 
   // Open modal handlers
@@ -121,7 +132,6 @@ function App() {
         categories={categories}
         selectedCategory={selectedCategory}
         onCategoryChange={handleCategoryChange}
-<<<<<<< Updated upstream
         onHomeClick={handleBackToGrid}
         isCollapsed={sidebarCollapsed}
         onToggle={setSidebarCollapsed}
@@ -134,50 +144,29 @@ function App() {
             relatedVideos={getRelatedVideos(selectedVideo, videos || [], 25)}
             onVideoSelect={handleVideoSelect}
             selectedCategory={selectedCategory}
-=======
-        onLogoClick={handleBackToGrid}
-        onLogin={handleLoginClick}
-      />
-      <main className="main-content">
-        <Routes>
-          <Route
-            path="/"
-            element={
-              <ContentApp
-                loading={loading}
-                message={message}
-                videos={filteredVideos}
-                onVideoSelect={handleVideoSelect}
-                searchTerm={searchTerm}
-                selectedCategory={selectedCategory}
-              />
-            }
->>>>>>> Stashed changes
           />
-          <Route
-            path="/video/:id"
-            element={
-              <VideoPlayerRoute
-                videos={videos || []}
-                onVideoSelect={handleVideoSelect}
-                onBack={handleBackToGrid}
-                selectedCategory={selectedCategory}
-              />
-            }
+        ) : (
+          <ContentApp
+            loading={loading}
+            message={message}
+            videos={filteredVideos}
+            onVideoSelect={handleVideoSelect}
+            searchTerm={searchTerm}
+            selectedCategory={selectedCategory}
           />
-        </Routes>
+        )}
       </main>
       {showLoginModal && (
         <LoginModal
           onClose={handleCloseLoginModal}
-          onSwitchToRegister={switchToRegister}
+          onSwitchToRegister={switchToRegister} // Changed from setShowRegisterModal
         />
       )}
 
       {showRegisterModal && (
         <RegisterModal
           onClose={handleCloseRegisterModal}
-          onSwitchToLogin={switchToLogin}
+          onSwitchToLogin={switchToLogin} // Changed from onLoginClick
         />
       )}
     </div>
@@ -254,48 +243,6 @@ function ContentApp({ loading, message, videos, onVideoSelect, searchTerm, selec
         </div>
       );
   }
-}
-
-interface VideoPlayerRouteProps {
-  videos: Video[];
-  onVideoSelect: (video: Video) => void;
-  onBack: () => void;
-  selectedCategory: string;
-}
-
-function VideoPlayerRoute({ videos, onVideoSelect, onBack, selectedCategory }: VideoPlayerRouteProps) {
-  const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
-
-  const video = useMemo(() => {
-    return videos.find((v) => v.id === Number(id));
-  }, [videos, id]);
-
-  useEffect(() => {
-    // If video is not found and videos have loaded, redirect to home
-    if (!video && videos.length > 0) {
-      navigate('/');
-    }
-  }, [video, videos, navigate]);
-
-  if (!video) {
-    return (
-      <div className="loading">
-        <div className="loading-spinner"></div>
-        <p>Cargando video...</p>
-      </div>
-    );
-  }
-
-  return (
-    <VideoPlayer
-      video={video}
-      onBack={onBack}
-      relatedVideos={getRelatedVideos(video, videos, 25)}
-      onVideoSelect={onVideoSelect}
-      selectedCategory={selectedCategory}
-    />
-  );
 }
 
 export default App;
