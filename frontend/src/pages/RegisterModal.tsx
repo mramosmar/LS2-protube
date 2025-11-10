@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import RegisterStep1 from '../pages/RegisterStep1';
-import RegisterStep2 from '../pages/RegisterStep2';
+import RegisterStep1 from './RegisterStep1';
+import RegisterStep2 from './RegisterStep2';
 import './RegisterModal.css';
 
 interface RegisterModalProps {

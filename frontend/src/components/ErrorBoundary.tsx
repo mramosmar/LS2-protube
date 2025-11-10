@@ -92,7 +92,7 @@ class ErrorBoundary extends Component<Props, State> {
                 marginRight: '10px',
               }}
             >
-              Recargar Página
+              Recargar página
             </button>
 
             <button
@@ -111,13 +111,13 @@ class ErrorBoundary extends Component<Props, State> {
                 fontSize: '16px',
               }}
             >
-              Limpiar Caché y Recargar
+              Limpiar caché y recargar
             </button>
           </div>
 
           <div style={{ marginTop: '30px', fontSize: '14px', color: '#aaa' }}>
             <p>
-              <strong>Soluciones comunes:</strong>
+              <strong>Posibles soluciones:</strong>
             </p>
             <ul style={{ textAlign: 'left', maxWidth: '500px' }}>
               <li>Verifica que el backend esté ejecutándose en http://localhost:8080</li>
