@@ -162,9 +162,6 @@ const VideoThumbnailHybrid = ({ video, size = 'medium', showCategory = true }: V
       {/* Overlay elements */}
       <div className="thumbnail-overlay">
         <div className="video-duration">{formatDuration(video.duration)}</div>
-        {showCategory && video.meta?.categories && video.meta.categories.length > 0 && (
-          <div className="video-category">{video.meta.categories[0]}</div>
-        )}
       </div>
     </div>
   );
