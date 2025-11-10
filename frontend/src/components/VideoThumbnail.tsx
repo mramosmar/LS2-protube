@@ -185,7 +185,8 @@ const VideoThumbnail = ({ video, size = 'medium', showCategory = true }: VideoTh
         }
         break;
 
-      case 4: // Spiral pattern
+      case 4: {
+        // Spiral pattern
         const centerX = width / 2;
         const centerY = height / 2;
         const maxRadius = Math.min(width, height) / 3;
@@ -207,6 +208,7 @@ const VideoThumbnail = ({ video, size = 'medium', showCategory = true }: VideoTh
         }
         ctx.stroke();
         break;
+      }
     }
 
     // Reset alpha

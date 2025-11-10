@@ -51,7 +51,7 @@ class ErrorBoundary extends Component<Props, State> {
             servidor o la configuración.
           </p>
 
-          {true && (
+          {
             <details
               style={{
                 backgroundColor: '#1a1a1a',
@@ -76,7 +76,7 @@ class ErrorBoundary extends Component<Props, State> {
                 {this.state.errorInfo?.componentStack}
               </pre>
             </details>
-          )}
+          }
 
           <div style={{ marginTop: '30px' }}>
             <button

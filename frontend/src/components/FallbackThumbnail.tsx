@@ -1,5 +1,4 @@
 import React from 'react';
-import './VideoThumbnail.css';
 
 interface FallbackThumbnailProps {
   video: {
@@ -32,12 +31,6 @@ const FallbackThumbnail: React.FC<FallbackThumbnailProps> = ({ video, size = 'me
     const mins = Math.floor(safeSeconds / 60);
     const secs = Math.floor(safeSeconds % 60);
     return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
-
-  // Simple color based on video ID
-  const getBackgroundColor = () => {
-    const colors = ['#ff4444', '#44ff44', '#4444ff', '#ffff44', '#ff44ff', '#44ffff', '#ff8844', '#8844ff'];
-    return colors[Math.abs(video.id || 0) % colors.length];
   };
 
   return (
