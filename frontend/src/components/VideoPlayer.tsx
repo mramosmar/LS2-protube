@@ -297,6 +297,7 @@ const VideoPlayer = ({ video, onBack, relatedVideos, onVideoSelect, selectedCate
             <video
               ref={videoRef}
               controls
+              autoPlay
               width="100%"
               height="auto"
               src={`http://localhost:8080/media/${video.id}.mp4`}
