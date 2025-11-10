@@ -4,9 +4,6 @@ import './Header.css';
 interface HeaderProps {
   searchTerm: string;
   onSearchChange: (term: string) => void;
-  categories: string[];
-  selectedCategory: string;
-  onCategoryChange: (category: string) => void;
   onLogoClick: () => void;
   onLogin: () => void;
 }
@@ -14,21 +11,12 @@ interface HeaderProps {
 const Header = ({
   searchTerm,
   onSearchChange,
-  categories,
-  selectedCategory,
-  onCategoryChange,
   onLogoClick,
   onLogin,
 }: HeaderProps) => {
-  const [showCategories, setShowCategories] = useState(false);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-  };
-
-  const handleCategorySelect = (category: string) => {
-    onCategoryChange(category);
-    setShowCategories(false);
   };
 
   return (
@@ -60,27 +48,6 @@ const Header = ({
       </div>
 
       <div className="header-right">
-        <div className="category-selector">
-          <button className="category-button" onClick={() => setShowCategories(!showCategories)}>
-            {selectedCategory === 'all' ? 'Todas las categorías' : selectedCategory}
-            <svg className="dropdown-icon" viewBox="0 0 24 24">
-              <path d="M7 10l5 5 5-5z" />
-            </svg>
-          </button>
-          {showCategories && (
-            <div className="category-dropdown">
-              {categories.map((category) => (
-                <button
-                  key={category}
-                  className={`category-option ${selectedCategory === category ? 'active' : ''}`}
-                  onClick={() => handleCategorySelect(category)}
-                >
-                  {category === 'all' ? 'Todas las categorías' : category}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
         <div className="channel-owner">
           <button className="video-avatar" onClick={onLogin}></button>
         </div>

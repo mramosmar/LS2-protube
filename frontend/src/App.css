@@ -21,10 +21,29 @@
 
 .main-content {
   padding: 32px;
-  max-width: 1400px;
-  margin: 0 auto;
+  margin-left: 240px;
   position: relative;
   z-index: 1;
+  min-height: calc(100vh - 64px);
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Cuando el sidebar está colapsado, el main-content ocupa todo el ancho */
+.main-content.sidebar-collapsed {
+  margin-left: 0;
+}
+
+@media (max-width: 1024px) {
+  .main-content {
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .main-content {
+    padding: 16px;
+    min-height: calc(100vh - 106px);
+  }
 }
 
 .loading {

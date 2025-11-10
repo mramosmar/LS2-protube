@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react';
 import { useAllVideos } from './useAllVideos';
 import VideoPlayer from './components/VideoPlayer';
 import Header from './components/Header';
+import Sidebar from './components/Sidebar';
 import VideoGrid from './components/VideoGrid';
 import LoginModal from './components/LoginModal';
 import { getRelatedVideos } from './utils/videoRecommendations';
@@ -33,6 +34,7 @@ function App() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showRegisterModal, setShowRegisterModal] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(typeof window !== 'undefined' ? window.innerWidth <= 1024 : false);
   const { loading, message, value: videos } = useAllVideos();
 
   // Handler for search that returns to grid view
@@ -123,13 +125,18 @@ function App() {
       <Header
         searchTerm={searchTerm}
         onSearchChange={handleSearchChange}
+        onLogoClick={handleBackToGrid}
+        onLogin={handleLoginClick}
+      />
+      <Sidebar
         categories={categories}
         selectedCategory={selectedCategory}
         onCategoryChange={handleCategoryChange}
-        onLogoClick={handleBackToGrid}
-        onLogin={handleLoginClick} // Pass the function to open the modal
+        onHomeClick={handleBackToGrid}
+        isCollapsed={sidebarCollapsed}
+        onToggle={setSidebarCollapsed}
       />
-      <main className="main-content">
+      <main className={`main-content ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
         {selectedVideo ? (
           <VideoPlayer
             video={selectedVideo}

@@ -1,8 +1,9 @@
 .video-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 28px;
   padding: 0;
+  width: 100%;
 }
 
 .video-card {
@@ -157,6 +158,7 @@
 }
 
 @keyframes float {
+
   0%,
   100% {
     transform: translateY(0);
@@ -183,7 +185,7 @@
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .video-grid {
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
     gap: 16px;
   }
 
@@ -210,6 +212,7 @@
 @media (max-width: 480px) {
   .video-grid {
     grid-template-columns: 1fr;
+    gap: 12px;
   }
 
   .video-id {
