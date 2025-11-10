@@ -5,9 +5,9 @@ import VideoPlayer from './components/VideoPlayer';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import VideoGrid from './components/VideoGrid';
-import LoginModal from './components/LoginModal';
+import LoginModal from './pages/LoginModal.tsx';
 import { getRelatedVideos } from './utils/videoRecommendations';
-import RegisterModal from './components/RegisterModal.tsx';
+import RegisterModal from './pages/RegisterModal.tsx';
 
 export interface Video {
   id: number;

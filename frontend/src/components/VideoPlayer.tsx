@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { Video } from '../App';
 import VideoThumbnailHybrid from './VideoThumbnailHybrid';
 import './VideoPlayer.css';
@@ -14,6 +14,77 @@ interface VideoPlayerProps {
 
 const VideoPlayer = ({ video, onBack, relatedVideos, onVideoSelect, selectedCategory }: VideoPlayerProps) => {
   const [showFullDescription, setShowFullDescription] = useState(false);
+  const [showEndScreen, setShowEndScreen] = useState(false);
+  const [autoplayCountdown, setAutoplayCountdown] = useState(10);
+  const [autoplayCancelled, setAutoplayCancelled] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Cleanup countdown on unmount or video change
+  useEffect(() => {
+    setShowEndScreen(false);
+    setAutoplayCountdown(10);
+    setAutoplayCancelled(false);
+    return () => {
+      if (countdownIntervalRef.current) {
+        clearInterval(countdownIntervalRef.current);
+      }
+    };
+  }, [video.id]);
+
+  // Handle video ended event
+  useEffect(() => {
+    const videoElement = videoRef.current;
+    if (!videoElement) return;
+
+    const handleEnded = () => {
+      setShowEndScreen(true);
+      setAutoplayCountdown(10);
+      setAutoplayCancelled(false);
+
+      // Start countdown for autoplay
+      countdownIntervalRef.current = setInterval(() => {
+        setAutoplayCountdown((prev) => {
+          if (prev <= 1) {
+            if (countdownIntervalRef.current) {
+              clearInterval(countdownIntervalRef.current);
+            }
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    };
+
+    const handlePlay = () => {
+      setShowEndScreen(false);
+      if (countdownIntervalRef.current) {
+        clearInterval(countdownIntervalRef.current);
+      }
+    };
+
+    videoElement.addEventListener('ended', handleEnded);
+    videoElement.addEventListener('play', handlePlay);
+
+    return () => {
+      videoElement.removeEventListener('ended', handleEnded);
+      videoElement.removeEventListener('play', handlePlay);
+      if (countdownIntervalRef.current) {
+        clearInterval(countdownIntervalRef.current);
+      }
+    };
+  }, [video.id]);
+
+  // Handle autoplay when countdown reaches 0
+  useEffect(() => {
+    if (autoplayCountdown === 0 && showEndScreen && !autoplayCancelled) {
+      const recommendedVideos = getRecommendedVideosForEndScreen();
+      const firstRecommended = recommendedVideos[0];
+      if (firstRecommended) {
+        onVideoSelect(firstRecommended);
+      }
+    }
+  }, [autoplayCountdown, showEndScreen, autoplayCancelled]);
 
   // Filter related videos by selected category if needed
   const filteredRelatedVideos = useMemo(() => {
@@ -128,6 +199,44 @@ const VideoPlayer = ({ video, onBack, relatedVideos, onVideoSelect, selectedCate
     return groups;
   }, [video, filteredRelatedVideos, allRelatedVideos]);
 
+  // Get recommended videos for end screen (maximum 12 videos)
+  const getRecommendedVideosForEndScreen = () => {
+    const recommendations: Video[] = [];
+
+    // Add same author videos (max 3)
+    recommendations.push(...groupedRelatedVideos.sameAuthor.slice(0, 3));
+
+    // Add same category videos (max 4)
+    const remainingSlots = 12 - recommendations.length;
+    recommendations.push(...groupedRelatedVideos.sameCategory.slice(0, Math.min(4, remainingSlots)));
+
+    // Add similar title videos (max 3)
+    const remainingSlots2 = 12 - recommendations.length;
+    recommendations.push(...groupedRelatedVideos.similarTitle.slice(0, Math.min(3, remainingSlots2)));
+
+    // Fill remaining with other videos
+    const remainingSlots3 = 12 - recommendations.length;
+    recommendations.push(...groupedRelatedVideos.others.slice(0, remainingSlots3));
+
+    return recommendations;
+  };
+
+  const handleCancelAutoplay = () => {
+    if (countdownIntervalRef.current) {
+      clearInterval(countdownIntervalRef.current);
+    }
+    setAutoplayCancelled(true);
+    setAutoplayCountdown(0);
+  };
+
+  const handleReplay = () => {
+    if (videoRef.current) {
+      videoRef.current.currentTime = 0;
+      videoRef.current.play();
+      setShowEndScreen(false);
+    }
+  };
+
   // Función para obtener el badge de relación
   const getRelationBadge = (relatedVideo: Video): { text: string; className: string } | null => {
     if (relatedVideo.user.toLowerCase() === video.user.toLowerCase()) {
@@ -193,6 +302,7 @@ const VideoPlayer = ({ video, onBack, relatedVideos, onVideoSelect, selectedCate
         <div className="video-player">
           <div className="video-player-wrapper">
             <video
+              ref={videoRef}
               controls
               width="100%"
               height="auto"
@@ -202,6 +312,56 @@ const VideoPlayer = ({ video, onBack, relatedVideos, onVideoSelect, selectedCate
             >
               Tu navegador no soporta la reproducción de video.
             </video>
+
+            {/* End Screen with Recommended Videos */}
+            {showEndScreen && (
+              <div className="video-end-screen">
+                <div className="end-screen-header">
+                  <h2 className="end-screen-title">A continuación</h2>
+                  {autoplayCountdown > 0 && (
+                    <div className="autoplay-info">
+                      <span className="autoplay-text">Reproducción automática en {autoplayCountdown}s</span>
+                      <button className="cancel-autoplay-btn" onClick={handleCancelAutoplay}>
+                        Cancelar
+                      </button>
+                    </div>
+                  )}
+                  <button className="replay-btn" onClick={handleReplay}>
+                    <svg viewBox="0 0 24 24" className="replay-icon">
+                      <path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z" />
+                    </svg>
+                    Reproducir de nuevo
+                  </button>
+                </div>
+
+                <div className="end-screen-videos">
+                  {getRecommendedVideosForEndScreen().map((recommendedVideo, index) => (
+                    <div
+                      key={recommendedVideo.id}
+                      className={`end-screen-video ${index === 0 && autoplayCountdown > 0 ? 'next-video' : ''}`}
+                      onClick={() => {
+                        handleCancelAutoplay();
+                        onVideoSelect(recommendedVideo);
+                      }}
+                    >
+                      <div className="end-screen-thumbnail">
+                        <VideoThumbnailHybrid video={recommendedVideo} size="medium" showCategory={false} />
+                        {index === 0 && autoplayCountdown > 0 && (
+                          <div className="next-video-overlay">
+                            <div className="next-video-badge">Siguiente</div>
+                          </div>
+                        )}
+                      </div>
+                      <div className="end-screen-video-info">
+                        <h4 className="end-screen-video-title">{recommendedVideo.title}</h4>
+                        <p className="end-screen-video-user">{recommendedVideo.user}</p>
+                        <p className="end-screen-video-views">{formatViews(recommendedVideo.id)}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
