@@ -6,9 +6,10 @@ import './RegisterModal.css';
 interface RegisterModalProps {
   onClose: () => void;
   onSwitchToLogin: () => void;
+  onRegisterSuccess?: () => void;
 }
 
-const RegisterModal: React.FC<RegisterModalProps> = ({ onClose, onSwitchToLogin }) => {
+const RegisterModal: React.FC<RegisterModalProps> = ({ onClose, onSwitchToLogin, onRegisterSuccess }) => {
   const [step, setStep] = useState(1);
   const [userData, setUserData] = useState({ username: '', email: '' });
 
@@ -29,6 +30,9 @@ const RegisterModal: React.FC<RegisterModalProps> = ({ onClose, onSwitchToLogin 
   };
 
   const handleRegistrationComplete = () => {
+    if (onRegisterSuccess) {
+      onRegisterSuccess();
+    }
     onClose();
   };
 

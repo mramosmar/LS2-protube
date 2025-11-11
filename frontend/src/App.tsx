@@ -9,6 +9,8 @@ import VideoGrid from './components/VideoGrid';
 import LoginModal from './pages/LoginModal.tsx';
 import { getRelatedVideos } from './utils/videoRecommendations';
 import RegisterModal from './pages/RegisterModal.tsx';
+import UploadVideoModal from './pages/UploadVideoModal.tsx';
+import { authService } from '../services/authService';
 
 export interface Video {
   id: number;
@@ -33,9 +35,21 @@ function App() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showRegisterModal, setShowRegisterModal] = useState(false);
+  const [showUploadModal, setShowUploadModal] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
-  const { loading, message, value: videos } = useAllVideos();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [currentUser, setCurrentUser] = useState<{ username: string } | null>(null);
+  const { loading, message, value: videos, refetch } = useAllVideos();
   const navigate = useNavigate();
+
+  // Check authentication status on mount
+  useEffect(() => {
+    const user = authService.getCurrentUser();
+    if (user) {
+      setIsAuthenticated(true);
+      setCurrentUser({ username: user.username });
+    }
+  }, []);
 
   // Handler for search
   const handleSearchChange = (term: string) => {
@@ -107,10 +121,36 @@ function App() {
 
   // Open modal handlers
   const handleLoginClick = () => setShowLoginModal(true);
+  const handleUploadClick = () => setShowUploadModal(true);
 
   // Close modal handlers
   const handleCloseLoginModal = () => setShowLoginModal(false);
   const handleCloseRegisterModal = () => setShowRegisterModal(false);
+  const handleCloseUploadModal = () => setShowUploadModal(false);
+
+  // Handle successful login
+  const handleLoginSuccess = () => {
+    const user = authService.getCurrentUser();
+    if (user) {
+      setIsAuthenticated(true);
+      setCurrentUser({ username: user.username });
+    }
+  };
+
+  // Handle successful upload
+  const handleUploadSuccess = () => {
+    // Refetch videos to show the new upload
+    if (refetch) {
+      refetch();
+    }
+  };
+
+  // Handle logout
+  const handleLogout = async () => {
+    await authService.logout();
+    setIsAuthenticated(false);
+    setCurrentUser(null);
+  };
 
   // Switch between modals handlers
   const switchToRegister = () => {
@@ -130,6 +170,10 @@ function App() {
         onSearchChange={handleSearchChange}
         onLogoClick={handleBackToGrid}
         onLogin={handleLoginClick}
+        isAuthenticated={isAuthenticated}
+        username={currentUser?.username}
+        onLogout={handleLogout}
+        onUpload={handleUploadClick}
       />
       <Sidebar
         categories={categories}
@@ -170,14 +214,23 @@ function App() {
       {showLoginModal && (
         <LoginModal
           onClose={handleCloseLoginModal}
-          onSwitchToRegister={switchToRegister} // Changed from setShowRegisterModal
+          onSwitchToRegister={switchToRegister}
+          onLoginSuccess={handleLoginSuccess}
         />
       )}
 
       {showRegisterModal && (
         <RegisterModal
           onClose={handleCloseRegisterModal}
-          onSwitchToLogin={switchToLogin} // Changed from onLoginClick
+          onSwitchToLogin={switchToLogin}
+          onRegisterSuccess={handleLoginSuccess}
+        />
+      )}
+
+      {showUploadModal && (
+        <UploadVideoModal
+          onClose={handleCloseUploadModal}
+          onUploadSuccess={handleUploadSuccess}
         />
       )}
     </div>
