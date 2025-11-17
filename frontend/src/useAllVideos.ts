@@ -11,6 +11,7 @@ interface Video {
   duration: number;
   width: number;
   height: number;
+  thumbnailExt?: string; // Optional thumbnail extension (.webp, .png, etc.)
   meta?: {
     description: string;
     categories: string[];

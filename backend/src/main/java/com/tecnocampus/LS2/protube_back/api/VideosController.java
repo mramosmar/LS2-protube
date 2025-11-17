@@ -118,6 +118,7 @@ public class VideosController {
             metadata.put("duration", Math.max(duration, 10)); // Minimum 10 seconds
             metadata.put("width", 1920);
             metadata.put("height", 1080);
+            metadata.put("thumbnailExt", thumbnailExt); // Store thumbnail extension
 
             Map<String, Object> meta = new HashMap<>();
             meta.put("description", description);

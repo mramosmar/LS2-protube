@@ -9,6 +9,7 @@ interface VideoThumbnailHybridProps {
     title: string;
     user: string;
     duration: number;
+    thumbnailExt?: string; // Optional thumbnail extension
     meta?: {
       categories?: string[];
     };
@@ -23,7 +24,7 @@ const VideoThumbnailHybrid = ({ video, size = 'medium', showCategory = true }: V
   const [isHovering, setIsHovering] = useState(false);
   const [showVideo, setShowVideo] = useState(false);
 
-  const { thumbnailUrl, isLoading, hasError } = useThumbnailUrl(video.id, video.title);
+  const { thumbnailUrl, isLoading, hasError } = useThumbnailUrl(video.id, video.title, video.thumbnailExt);
 
   const imgRef = useRef<HTMLImageElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);

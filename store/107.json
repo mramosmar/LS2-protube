@@ -12,5 +12,6 @@
   "id" : 107,
   "title" : "prova",
   "user" : "fjlkafdslkj",
-  "height" : 1080
+  "height" : 1080,
+  "thumbnailExt" : ".png"
 }

@@ -15,7 +15,7 @@ interface VideoThumbnailProps {
   showCategory?: boolean;
 }
 
-const VideoThumbnail = ({ video, size = 'medium', showCategory = true }: VideoThumbnailProps) => {
+const VideoThumbnail = ({ video, size = 'medium' }: VideoThumbnailProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [imageLoaded, setImageLoaded] = useState(false);
 
