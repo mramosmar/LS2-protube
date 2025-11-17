@@ -1,34 +1,61 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import './Header.css';
 
 interface HeaderProps {
   searchTerm: string;
   onSearchChange: (term: string) => void;
-  categories: string[];
-  selectedCategory: string;
-  onCategoryChange: (category: string) => void;
   onLogoClick: () => void;
   onLogin: () => void;
+  isAuthenticated: boolean;
+  username?: string;
+  onLogout: () => void;
+  onUpload: () => void;
 }
 
 const Header = ({
   searchTerm,
   onSearchChange,
-  categories,
-  selectedCategory,
-  onCategoryChange,
   onLogoClick,
   onLogin,
+  isAuthenticated,
+  username,
+  onLogout,
+  onUpload,
 }: HeaderProps) => {
-  const [showCategories, setShowCategories] = useState(false);
+  const [showLogoutMenu, setShowLogoutMenu] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setShowLogoutMenu(false);
+      }
+    };
+
+    if (showLogoutMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showLogoutMenu]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
   };
 
-  const handleCategorySelect = (category: string) => {
-    onCategoryChange(category);
-    setShowCategories(false);
+  const handleAvatarClick = () => {
+    if (isAuthenticated) {
+      setShowLogoutMenu(!showLogoutMenu);
+    } else {
+      onLogin();
+    }
+  };
+
+  const handleLogout = () => {
+    setShowLogoutMenu(false);
+    onLogout();
   };
 
   return (
@@ -60,29 +87,35 @@ const Header = ({
       </div>
 
       <div className="header-right">
-        <div className="category-selector">
-          <button className="category-button" onClick={() => setShowCategories(!showCategories)}>
-            {selectedCategory === 'all' ? 'Todas las categorías' : selectedCategory}
-            <svg className="dropdown-icon" viewBox="0 0 24 24">
-              <path d="M7 10l5 5 5-5z" />
+        {isAuthenticated && (
+          <button className="upload-button" onClick={onUpload} title="Subir video">
+            <svg className="upload-icon" viewBox="0 0 24 24" width="24" height="24">
+              <path
+                fill="currentColor"
+                d="M14,13V17H10V13H7L12,8L17,13M19.35,10.03C18.67,6.59 15.64,4 12,4C9.11,4 6.6,5.64 5.35,8.03C2.34,8.36 0,10.9 0,14A6,6 0 0,0 6,20H19A5,5 0 0,0 24,15C24,12.36 21.95,10.22 19.35,10.03Z"
+              />
             </svg>
+            <span className="upload-text">Subir</span>
           </button>
-          {showCategories && (
-            <div className="category-dropdown">
-              {categories.map((category) => (
-                <button
-                  key={category}
-                  className={`category-option ${selectedCategory === category ? 'active' : ''}`}
-                  onClick={() => handleCategorySelect(category)}
-                >
-                  {category === 'all' ? 'Todas las categorías' : category}
-                </button>
-              ))}
+        )}
+        <div className="channel-owner" ref={menuRef}>
+          <button
+            className="video-avatar"
+            onClick={handleAvatarClick}
+            title={isAuthenticated ? username : 'Iniciar sesión'}
+          >
+            {isAuthenticated && username && <span className="avatar-initial">{username.charAt(0).toUpperCase()}</span>}
+          </button>
+          {isAuthenticated && showLogoutMenu && (
+            <div className="logout-menu">
+              <div className="logout-menu-header">
+                <span className="logout-menu-username">{username}</span>
+              </div>
+              <button className="logout-button" onClick={handleLogout}>
+                Cerrar sesión
+              </button>
             </div>
           )}
-        </div>
-        <div className="channel-owner">
-          <button className="video-avatar" onClick={onLogin}></button>
         </div>
       </div>
     </header>

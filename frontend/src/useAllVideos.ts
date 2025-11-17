@@ -22,6 +22,7 @@ export function useAllVideos() {
   const [value, setValue] = useState<Video[]>([]);
   const [message, setMessage] = useState<string>('Loading...');
   const [loading, setLoading] = useState<LoadingState>('idle');
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     const getVideos = async () => {
@@ -78,7 +79,11 @@ export function useAllVideos() {
       }
     };
     getVideos();
-  }, []);
+  }, [refreshKey]);
 
-  return { value, message, loading };
+  const refetch = () => {
+    setRefreshKey((prev) => prev + 1);
+  };
+
+  return { value, message, loading, refetch };
 }

@@ -1,14 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import RegisterStep1 from '../pages/RegisterStep1';
-import RegisterStep2 from '../pages/RegisterStep2';
+import RegisterStep1 from './RegisterStep1';
+import RegisterStep2 from './RegisterStep2';
 import './RegisterModal.css';
 
 interface RegisterModalProps {
   onClose: () => void;
   onSwitchToLogin: () => void;
+  onRegisterSuccess?: () => void;
 }
 
-const RegisterModal: React.FC<RegisterModalProps> = ({ onClose, onSwitchToLogin }) => {
+const RegisterModal: React.FC<RegisterModalProps> = ({ onClose, onSwitchToLogin, onRegisterSuccess }) => {
   const [step, setStep] = useState(1);
   const [userData, setUserData] = useState({ username: '', email: '' });
 
@@ -29,6 +30,9 @@ const RegisterModal: React.FC<RegisterModalProps> = ({ onClose, onSwitchToLogin 
   };
 
   const handleRegistrationComplete = () => {
+    if (onRegisterSuccess) {
+      onRegisterSuccess();
+    }
     onClose();
   };
 

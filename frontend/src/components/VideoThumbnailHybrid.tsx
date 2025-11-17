@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import useThumbnailUrl from '../hooks/useThumbnailUrl';
 import FallbackThumbnail from './FallbackThumbnail';
 import './VideoThumbnailHybrid.css';
@@ -20,14 +20,31 @@ interface VideoThumbnailHybridProps {
 const VideoThumbnailHybrid = ({ video, size = 'medium', showCategory = true }: VideoThumbnailHybridProps) => {
   const [imageError, setImageError] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
-  const { thumbnailUrl, isLoading, hasError } = useThumbnailUrl(video.id, video.title);
-  const imgRef = useRef<HTMLImageElement>(null);
+  const [isHovering, setIsHovering] = useState(false);
+  const [showVideo, setShowVideo] = useState(false);
 
-  // Validate video data
+  const { thumbnailUrl, isLoading, hasError } = useThumbnailUrl(video.id, video.title);
+
+  const imgRef = useRef<HTMLImageElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const hoverTimeoutRef = useRef<number | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    return () => {
+      if (hoverTimeoutRef.current) {
+        clearTimeout(hoverTimeoutRef.current);
+      }
+    };
+  }, []);
+
   const isVideoValid = video && typeof video.id === 'number' && video.title && video.user && isFinite(video.duration);
 
   if (!isVideoValid) {
-    console.warn('Invalid video data in VideoThumbnailHybrid:', video);
+    return <FallbackThumbnail video={video} size={size} showCategory={showCategory} />;
+  }
+
+  if (imageError || hasError || (!isLoading && !thumbnailUrl)) {
     return <FallbackThumbnail video={video} size={size} showCategory={showCategory} />;
   }
 
@@ -58,15 +75,40 @@ const VideoThumbnailHybrid = ({ video, size = 'medium', showCategory = true }: V
     setImageLoaded(false);
   };
 
-  // If there's an error loading the real image or hook reports error, use fallback
-  if (imageError || hasError || (!isLoading && !thumbnailUrl)) {
-    return <FallbackThumbnail video={video} size={size} showCategory={showCategory} />;
-  }
+  const handleMouseEnter = () => {
+    setIsHovering(true);
+    hoverTimeoutRef.current = window.setTimeout(() => {
+      setShowVideo(true);
+      setTimeout(() => {
+        if (videoRef.current) {
+          videoRef.current.currentTime = 0;
+          videoRef.current.play().catch(() => {});
+        }
+      }, 100);
+    }, 500);
+  };
+
+  const handleMouseLeave = () => {
+    setIsHovering(false);
+    setShowVideo(false);
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+      hoverTimeoutRef.current = null;
+    }
+    if (videoRef.current) {
+      videoRef.current.pause();
+      videoRef.current.currentTime = 0;
+    }
+  };
 
   return (
-    <div className={`video-thumbnail-hybrid ${getSizeClasses()}`}>
-      {/* Loading placeholder */}
-      {(isLoading || !imageLoaded) && (
+    <div
+      ref={containerRef}
+      className={`video-thumbnail-hybrid ${getSizeClasses()} ${isHovering ? 'hovering' : ''}`}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
+      {(isLoading || !imageLoaded) && !showVideo && (
         <div
           className="thumbnail-loading"
           style={{
@@ -84,23 +126,30 @@ const VideoThumbnailHybrid = ({ video, size = 'medium', showCategory = true }: V
         </div>
       )}
 
-      {/* Real image */}
       <img
         ref={imgRef}
         src={thumbnailUrl}
         alt={video.title}
-        className={`thumbnail-image ${imageLoaded ? 'loaded' : ''}`}
+        className={`thumbnail-image ${imageLoaded ? 'loaded' : ''} ${showVideo ? 'hidden' : ''}`}
         onLoad={handleImageLoad}
         onError={handleImageError}
         loading="lazy"
       />
 
-      {/* Overlay elements */}
+      {showVideo && (
+        <video
+          ref={videoRef}
+          className="thumbnail-video"
+          src={`http://localhost:8080/media/${video.id}.mp4`}
+          loop
+          muted
+          playsInline
+          preload="metadata"
+        />
+      )}
+
       <div className="thumbnail-overlay">
         <div className="video-duration">{formatDuration(video.duration)}</div>
-        {showCategory && video.meta?.categories && video.meta.categories.length > 0 && (
-          <div className="video-category">{video.meta.categories[0]}</div>
-        )}
       </div>
     </div>
   );

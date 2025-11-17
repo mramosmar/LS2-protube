@@ -5,9 +5,10 @@ import './LoginModal.css';
 interface LoginModalProps {
   onClose: () => void;
   onSwitchToRegister: () => void;
+  onLoginSuccess?: () => void;
 }
 
-const LoginModal: React.FC<LoginModalProps> = ({ onClose, onSwitchToRegister }) => {
+const LoginModal: React.FC<LoginModalProps> = ({ onClose, onSwitchToRegister, onLoginSuccess }) => {
   const [error, setError] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -32,6 +33,9 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose, onSwitchToRegister }) 
         email: username,
         password: password,
       });
+      if (onLoginSuccess) {
+        onLoginSuccess();
+      }
       onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed');

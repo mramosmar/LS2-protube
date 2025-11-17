@@ -1,12 +1,16 @@
 import './App.css';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
+import { Routes, Route, useNavigate, useParams } from 'react-router-dom';
 import { useAllVideos } from './useAllVideos';
 import VideoPlayer from './components/VideoPlayer';
 import Header from './components/Header';
+import Sidebar from './components/Sidebar';
 import VideoGrid from './components/VideoGrid';
-import LoginModal from './components/LoginModal';
+import LoginModal from './pages/LoginModal.tsx';
 import { getRelatedVideos } from './utils/videoRecommendations';
-import RegisterModal from './components/RegisterModal.tsx';
+import RegisterModal from './pages/RegisterModal.tsx';
+import UploadVideoModal from './pages/UploadVideoModal.tsx';
+import { authService } from '../services/authService';
 
 export interface Video {
   id: number;
@@ -27,33 +31,34 @@ export interface Video {
 }
 
 function App() {
-  const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
-  const [previousVideo, setPreviousVideo] = useState<Video | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showRegisterModal, setShowRegisterModal] = useState(false);
-  const { loading, message, value: videos } = useAllVideos();
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [currentUser, setCurrentUser] = useState<{ username: string } | null>(null);
+  const { loading, message, value: videos, refetch } = useAllVideos();
+  const navigate = useNavigate();
 
-  // Handler for search that returns to grid view
+  // Check authentication status on mount
+  useEffect(() => {
+    const user = authService.getCurrentUser();
+    if (user) {
+      setIsAuthenticated(true);
+      setCurrentUser({ username: user.username });
+    }
+  }, []);
+
+  // Handler for search
   const handleSearchChange = (term: string) => {
     setSearchTerm(term);
-    if (selectedVideo && term !== '') {
-      setPreviousVideo(selectedVideo); // Save current video before leaving
-      setSelectedVideo(null); // Return to grid when searching from video player
-    } else if (term === '' && previousVideo && !selectedVideo) {
-      setSelectedVideo(previousVideo); // Restore previous video when clearing search
-      setPreviousVideo(null);
-    }
   };
 
-  // Handler for category change that returns to grid view
+  // Handler for category change
   const handleCategoryChange = (category: string) => {
     setSelectedCategory(category);
-    if (selectedVideo) {
-      setPreviousVideo(selectedVideo); // Save current video before leaving
-      setSelectedVideo(null); // Return to grid when changing category from video player
-    }
   };
 
   // Get unique categories from videos
@@ -90,22 +95,62 @@ function App() {
       .sort((a, b) => a.title.localeCompare(b.title, 'es', { sensitivity: 'base' }));
   }, [videos, searchTerm, selectedCategory]);
 
+  // Helper function to create URL-friendly slug from title
+  const createSlug = (title: string): string => {
+    return title
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '') // Remove accents
+      .replace(/[^\w\s-]/g, '') // Remove special characters
+      .replace(/\s+/g, '-') // Replace spaces with -
+      .replace(/-+/g, '-') // Replace multiple - with single -
+      .replace(/^-+|-+$/g, '') // Remove leading/trailing -
+      .trim();
+  };
+
   const handleVideoSelect = (video: Video) => {
-    setSelectedVideo(video);
-    setPreviousVideo(null); // Clear previous video when selecting a new one
+    // Navigate to the video URL with ID and title slug
+    const slug = createSlug(video.title);
+    navigate(`/video/${video.id}/${slug}`);
   };
 
   const handleBackToGrid = () => {
-    setSelectedVideo(null);
-    setPreviousVideo(null); // Clear previous video when going back
+    // Navigate back to home
+    navigate('/');
   };
 
   // Open modal handlers
   const handleLoginClick = () => setShowLoginModal(true);
+  const handleUploadClick = () => setShowUploadModal(true);
 
   // Close modal handlers
   const handleCloseLoginModal = () => setShowLoginModal(false);
   const handleCloseRegisterModal = () => setShowRegisterModal(false);
+  const handleCloseUploadModal = () => setShowUploadModal(false);
+
+  // Handle successful login
+  const handleLoginSuccess = () => {
+    const user = authService.getCurrentUser();
+    if (user) {
+      setIsAuthenticated(true);
+      setCurrentUser({ username: user.username });
+    }
+  };
+
+  // Handle successful upload
+  const handleUploadSuccess = () => {
+    // Refetch videos to show the new upload
+    if (refetch) {
+      refetch();
+    }
+  };
+
+  // Handle logout
+  const handleLogout = async () => {
+    await authService.logout();
+    setIsAuthenticated(false);
+    setCurrentUser(null);
+  };
 
   // Switch between modals handlers
   const switchToRegister = () => {
@@ -123,46 +168,111 @@ function App() {
       <Header
         searchTerm={searchTerm}
         onSearchChange={handleSearchChange}
+        onLogoClick={handleBackToGrid}
+        onLogin={handleLoginClick}
+        isAuthenticated={isAuthenticated}
+        username={currentUser?.username}
+        onLogout={handleLogout}
+        onUpload={handleUploadClick}
+      />
+      <Sidebar
         categories={categories}
         selectedCategory={selectedCategory}
         onCategoryChange={handleCategoryChange}
-        onLogoClick={handleBackToGrid}
-        onLogin={handleLoginClick} // Pass the function to open the modal
+        onHomeClick={handleBackToGrid}
+        isCollapsed={sidebarCollapsed}
+        onToggle={setSidebarCollapsed}
       />
-      <main className="main-content">
-        {selectedVideo ? (
-          <VideoPlayer
-            video={selectedVideo}
-            onBack={handleBackToGrid}
-            relatedVideos={getRelatedVideos(selectedVideo, videos || [], 25)}
-            onVideoSelect={handleVideoSelect}
-            selectedCategory={selectedCategory}
+      <main className={`main-content ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
+        <Routes>
+          <Route
+            path="/"
+            element={
+              <ContentApp
+                loading={loading}
+                message={message}
+                videos={filteredVideos}
+                onVideoSelect={handleVideoSelect}
+                searchTerm={searchTerm}
+                selectedCategory={selectedCategory}
+              />
+            }
           />
-        ) : (
-          <ContentApp
-            loading={loading}
-            message={message}
-            videos={filteredVideos}
-            onVideoSelect={handleVideoSelect}
-            searchTerm={searchTerm}
-            selectedCategory={selectedCategory}
+          <Route
+            path="/video/:videoId/:videoTitle"
+            element={
+              <VideoPlayerRoute
+                videos={videos || []}
+                onBack={handleBackToGrid}
+                onVideoSelect={handleVideoSelect}
+                selectedCategory={selectedCategory}
+              />
+            }
           />
-        )}
+        </Routes>
       </main>
       {showLoginModal && (
         <LoginModal
           onClose={handleCloseLoginModal}
-          onSwitchToRegister={switchToRegister} // Changed from setShowRegisterModal
+          onSwitchToRegister={switchToRegister}
+          onLoginSuccess={handleLoginSuccess}
         />
       )}
 
       {showRegisterModal && (
         <RegisterModal
           onClose={handleCloseRegisterModal}
-          onSwitchToLogin={switchToLogin} // Changed from onLoginClick
+          onSwitchToLogin={switchToLogin}
+          onRegisterSuccess={handleLoginSuccess}
         />
       )}
+
+      {showUploadModal && <UploadVideoModal onClose={handleCloseUploadModal} onUploadSuccess={handleUploadSuccess} />}
     </div>
+  );
+}
+
+interface VideoPlayerRouteProps {
+  videos: Video[];
+  onBack: () => void;
+  onVideoSelect: (video: Video) => void;
+  selectedCategory: string;
+}
+
+function VideoPlayerRoute({ videos, onBack, onVideoSelect, selectedCategory }: VideoPlayerRouteProps) {
+  const { videoId, videoTitle } = useParams<{ videoId: string; videoTitle: string }>();
+  const navigate = useNavigate();
+
+  // Find the video by ID
+  const video = useMemo(() => {
+    if (!videoId || !videos) return null;
+    return videos.find((v) => v.id === parseInt(videoId, 10));
+  }, [videoId, videos]);
+
+  // Redirect to home if video not found
+  useEffect(() => {
+    if (videoId && videos.length > 0 && !video) {
+      navigate('/');
+    }
+  }, [video, videoId, videos, navigate]);
+
+  if (!video) {
+    return (
+      <div className="loading">
+        <div className="loading-spinner"></div>
+        <p>Cargando video...</p>
+      </div>
+    );
+  }
+
+  return (
+    <VideoPlayer
+      video={video}
+      onBack={onBack}
+      relatedVideos={getRelatedVideos(video, videos, 25)}
+      onVideoSelect={onVideoSelect}
+      selectedCategory={selectedCategory}
+    />
   );
 }
 

@@ -310,9 +310,6 @@ const VideoThumbnail = ({ video, size = 'medium', showCategory = true }: VideoTh
       <canvas ref={canvasRef} width={320} height={180} className={`thumbnail-canvas ${imageLoaded ? 'loaded' : ''}`} />
       <div className="thumbnail-overlay">
         <div className="video-duration">{formatDuration(video.duration)}</div>
-        {showCategory && video.meta?.categories && video.meta.categories.length > 0 && (
-          <div className="video-category">{video.meta.categories[0]}</div>
-        )}
       </div>
     </div>
   );
