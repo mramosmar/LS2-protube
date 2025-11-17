@@ -227,12 +227,7 @@ function App() {
         />
       )}
 
-      {showUploadModal && (
-        <UploadVideoModal
-          onClose={handleCloseUploadModal}
-          onUploadSuccess={handleUploadSuccess}
-        />
-      )}
+      {showUploadModal && <UploadVideoModal onClose={handleCloseUploadModal} onUploadSuccess={handleUploadSuccess} />}
     </div>
   );
 }

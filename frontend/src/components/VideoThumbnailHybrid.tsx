@@ -22,17 +22,29 @@ const VideoThumbnailHybrid = ({ video, size = 'medium', showCategory = true }: V
   const [imageLoaded, setImageLoaded] = useState(false);
   const [isHovering, setIsHovering] = useState(false);
   const [showVideo, setShowVideo] = useState(false);
+
   const { thumbnailUrl, isLoading, hasError } = useThumbnailUrl(video.id, video.title);
+
   const imgRef = useRef<HTMLImageElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const hoverTimeoutRef = useRef<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Validate video data
+  useEffect(() => {
+    return () => {
+      if (hoverTimeoutRef.current) {
+        clearTimeout(hoverTimeoutRef.current);
+      }
+    };
+  }, []);
+
   const isVideoValid = video && typeof video.id === 'number' && video.title && video.user && isFinite(video.duration);
 
   if (!isVideoValid) {
-    console.warn('Invalid video data in VideoThumbnailHybrid:', video);
+    return <FallbackThumbnail video={video} size={size} showCategory={showCategory} />;
+  }
+
+  if (imageError || hasError || (!isLoading && !thumbnailUrl)) {
     return <FallbackThumbnail video={video} size={size} showCategory={showCategory} />;
   }
 
@@ -63,25 +75,19 @@ const VideoThumbnailHybrid = ({ video, size = 'medium', showCategory = true }: V
     setImageLoaded(false);
   };
 
-  // Handle mouse enter - delay before showing video
   const handleMouseEnter = () => {
     setIsHovering(true);
-    // Wait 500ms before starting video preview
-    hoverTimeoutRef.current = setTimeout(() => {
+    hoverTimeoutRef.current = window.setTimeout(() => {
       setShowVideo(true);
-      // Start playing video after a brief delay to ensure it's loaded
       setTimeout(() => {
         if (videoRef.current) {
           videoRef.current.currentTime = 0;
-          videoRef.current.play().catch(() => {
-            // Ignore play errors (e.g., user interaction required)
-          });
+          videoRef.current.play().catch(() => {});
         }
       }, 100);
     }, 500);
   };
 
-  // Handle mouse leave - stop video and reset
   const handleMouseLeave = () => {
     setIsHovering(false);
     setShowVideo(false);
@@ -95,20 +101,6 @@ const VideoThumbnailHybrid = ({ video, size = 'medium', showCategory = true }: V
     }
   };
 
-  // Cleanup timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (hoverTimeoutRef.current) {
-        clearTimeout(hoverTimeoutRef.current);
-      }
-    };
-  }, []);
-
-  // If there's an error loading the real image or hook reports error, use fallback
-  if (imageError || hasError || (!isLoading && !thumbnailUrl)) {
-    return <FallbackThumbnail video={video} size={size} showCategory={showCategory} />;
-  }
-
   return (
     <div
       ref={containerRef}
@@ -116,7 +108,6 @@ const VideoThumbnailHybrid = ({ video, size = 'medium', showCategory = true }: V
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      {/* Loading placeholder */}
       {(isLoading || !imageLoaded) && !showVideo && (
         <div
           className="thumbnail-loading"
@@ -135,7 +126,6 @@ const VideoThumbnailHybrid = ({ video, size = 'medium', showCategory = true }: V
         </div>
       )}
 
-      {/* Real image */}
       <img
         ref={imgRef}
         src={thumbnailUrl}
@@ -146,7 +136,6 @@ const VideoThumbnailHybrid = ({ video, size = 'medium', showCategory = true }: V
         loading="lazy"
       />
 
-      {/* Video preview on hover */}
       {showVideo && (
         <video
           ref={videoRef}
@@ -159,7 +148,6 @@ const VideoThumbnailHybrid = ({ video, size = 'medium', showCategory = true }: V
         />
       )}
 
-      {/* Overlay elements */}
       <div className="thumbnail-overlay">
         <div className="video-duration">{formatDuration(video.duration)}</div>
       </div>

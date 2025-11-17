@@ -38,7 +38,7 @@ export const authService = {
     if (!response.ok) {
       throw new Error(result.error || 'Login failed');
     }
-    
+
     // Save user data and token to localStorage
     if (result.token) {
       localStorage.setItem(TOKEN_STORAGE_KEY, result.token);
@@ -61,7 +61,7 @@ export const authService = {
     if (!response.ok) {
       throw new Error(result.error || 'Registration failed');
     }
-    
+
     // Save user data and token to localStorage
     if (result.token) {
       localStorage.setItem(TOKEN_STORAGE_KEY, result.token);
@@ -92,7 +92,7 @@ export const authService = {
   getCurrentUser(): UserDTO | null {
     const userJson = localStorage.getItem(USER_STORAGE_KEY);
     if (!userJson) return null;
-    
+
     try {
       return JSON.parse(userJson);
     } catch {

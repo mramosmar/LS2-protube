@@ -37,7 +37,7 @@ const UploadVideoModal: React.FC<UploadVideoModalProps> = ({ onClose, onUploadSu
       }
       setVideoFile(file);
       setError('');
-      
+
       // Create preview
       if (videoPreview) URL.revokeObjectURL(videoPreview);
       setVideoPreview(URL.createObjectURL(file));
@@ -54,7 +54,7 @@ const UploadVideoModal: React.FC<UploadVideoModalProps> = ({ onClose, onUploadSu
       }
       setThumbnailFile(file);
       setError('');
-      
+
       // Create preview
       if (thumbnailPreview) URL.revokeObjectURL(thumbnailPreview);
       setThumbnailPreview(URL.createObjectURL(file));
@@ -63,7 +63,7 @@ const UploadVideoModal: React.FC<UploadVideoModalProps> = ({ onClose, onUploadSu
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!videoFile) {
       setError('Por favor, selecciona un video');
       return;
@@ -92,13 +92,13 @@ const UploadVideoModal: React.FC<UploadVideoModalProps> = ({ onClose, onUploadSu
       formData.append('description', description);
 
       const token = authService.getToken();
-      
+
       // Debug: Log si hay token
       console.log('Token disponible:', token ? 'Sí' : 'No');
       console.log('Usuario autenticado:', authService.isAuthenticated());
-      
+
       const headers: HeadersInit = {};
-      
+
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;
       } else {
@@ -118,7 +118,9 @@ const UploadVideoModal: React.FC<UploadVideoModalProps> = ({ onClose, onUploadSu
       console.log('Respuesta recibida:', response.status);
 
       if (!response.ok) {
-        const result = await response.json().catch(() => ({ error: `Error ${response.status}: ${response.statusText}` }));
+        const result = await response
+          .json()
+          .catch(() => ({ error: `Error ${response.status}: ${response.statusText}` }));
         throw new Error(result.error || `Error ${response.status}: ${response.statusText}`);
       }
 
@@ -142,19 +144,12 @@ const UploadVideoModal: React.FC<UploadVideoModalProps> = ({ onClose, onUploadSu
         </button>
         <h2>Subir Video</h2>
         {error && <div className="error-message">{error}</div>}
-        
+
         <form onSubmit={handleSubmit} className="upload-form">
           <div className="form-section">
             <div className="form-group">
               <label htmlFor="video">Video (solo .mp4) *</label>
-              <input
-                type="file"
-                id="video"
-                accept=".mp4"
-                onChange={handleVideoChange}
-                required
-                disabled={isLoading}
-              />
+              <input type="file" id="video" accept=".mp4" onChange={handleVideoChange} required disabled={isLoading} />
               {videoPreview && (
                 <div className="video-preview">
                   <video src={videoPreview} controls style={{ maxWidth: '100%', maxHeight: '200px' }} />
@@ -174,7 +169,11 @@ const UploadVideoModal: React.FC<UploadVideoModalProps> = ({ onClose, onUploadSu
               />
               {thumbnailPreview && (
                 <div className="thumbnail-preview">
-                  <img src={thumbnailPreview} alt="Thumbnail preview" style={{ maxWidth: '100%', maxHeight: '150px' }} />
+                  <img
+                    src={thumbnailPreview}
+                    alt="Thumbnail preview"
+                    style={{ maxWidth: '100%', maxHeight: '150px' }}
+                  />
                 </div>
               )}
             </div>
@@ -211,19 +210,10 @@ const UploadVideoModal: React.FC<UploadVideoModalProps> = ({ onClose, onUploadSu
           </div>
 
           <div className="form-actions">
-            <button 
-              type="button" 
-              onClick={onClose} 
-              className="secondary-button"
-              disabled={isLoading}
-            >
+            <button type="button" onClick={onClose} className="secondary-button" disabled={isLoading}>
               Cancelar
             </button>
-            <button 
-              type="submit" 
-              className="primary-button"
-              disabled={isLoading}
-            >
+            <button type="submit" className="primary-button" disabled={isLoading}>
               {isLoading ? 'Subiendo...' : 'Subir Video'}
             </button>
           </div>
