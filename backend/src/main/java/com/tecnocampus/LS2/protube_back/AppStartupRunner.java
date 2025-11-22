@@ -28,7 +28,10 @@ public class AppStartupRunner implements ApplicationRunner {
 
     public AppStartupRunner(Environment env) {
         this.env = env;
-        final var rootDir = env.getProperty("pro_tube.store.dir");
+        String rootDir = env.getProperty("pro_tube.store.dir");
+        if (rootDir == null) {
+            rootDir = "./store"; // Fallback default
+        }
         this.rootPath = Paths.get(rootDir);
         loadInitialData = env.getProperty("pro_tube.load_initial_data", Boolean.class);
 

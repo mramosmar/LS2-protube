@@ -131,7 +131,10 @@ const VideoPlayer = ({ video, onBack, relatedVideos, onVideoSelect, selectedCate
 
     videosWithTitleScore.forEach(({ video: relatedVideo, titleScore }) => {
       // Categorizar por tipo de relación (prioridad)
-      if (relatedVideo.user.toLowerCase() === video.user.toLowerCase()) {
+      const videoUser = typeof video.user === 'string' ? video.user : video.user?.username || '';
+      const relatedUser = typeof relatedVideo.user === 'string' ? relatedVideo.user : relatedVideo.user?.username || '';
+
+      if (relatedUser.toLowerCase() === videoUser.toLowerCase()) {
         groups.sameAuthor.push(relatedVideo);
       } else if (
         video.meta?.categories?.some((cat) =>
@@ -243,7 +246,10 @@ const VideoPlayer = ({ video, onBack, relatedVideos, onVideoSelect, selectedCate
 
   // Función para obtener el badge de relación
   const getRelationBadge = (relatedVideo: Video): { text: string; className: string } | null => {
-    if (relatedVideo.user.toLowerCase() === video.user.toLowerCase()) {
+    const videoUser = typeof video.user === 'string' ? video.user : video.user?.username || '';
+    const relatedUser = typeof relatedVideo.user === 'string' ? relatedVideo.user : relatedVideo.user?.username || '';
+
+    if (relatedUser.toLowerCase() === videoUser.toLowerCase()) {
       return { text: 'Mismo autor', className: 'badge-author' };
     }
 
@@ -421,7 +427,9 @@ const VideoPlayer = ({ video, onBack, relatedVideos, onVideoSelect, selectedCate
                       </div>
                       <div className="end-screen-video-info">
                         <h4 className="end-screen-video-title">{recommendedVideo.title}</h4>
-                        <p className="end-screen-video-user">{recommendedVideo.user}</p>
+                        <p className="end-screen-video-user">
+                          {typeof recommendedVideo.user === 'string' ? recommendedVideo.user : recommendedVideo.user?.username || 'Unknown'}
+                        </p>
                         <p className="end-screen-video-views">{formatViews(recommendedVideo.id)}</p>
                       </div>
                     </div>
@@ -474,9 +482,13 @@ const VideoPlayer = ({ video, onBack, relatedVideos, onVideoSelect, selectedCate
 
           <div className="channel-section">
             <div className="channel-info">
-              <div className="channel-avatar">{video.user.charAt(0).toUpperCase()}</div>
+              <div className="channel-avatar">
+                {(typeof video.user === 'string' ? video.user : video.user?.username || '?').charAt(0).toUpperCase()}
+              </div>
               <div className="channel-details">
-                <h3 className="channel-name">{video.user}</h3>
+                <h3 className="channel-name">
+                  {typeof video.user === 'string' ? video.user : video.user?.username || 'Unknown'}
+                </h3>
                 <p className="channel-subscribers">
                   {Math.floor(((video.id * 6151 + 21377) % 233280) % 1000)}K suscriptores
                 </p>

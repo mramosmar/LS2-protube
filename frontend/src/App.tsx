@@ -1,6 +1,6 @@
 import './App.css';
 import { useMemo, useState, useEffect } from 'react';
-import {Routes, Route, useNavigate, useParams, useLocation} from 'react-router-dom';
+import { Routes, Route, useNavigate, useParams, useLocation } from 'react-router-dom';
 import { useAllVideos } from './useAllVideos';
 import VideoPlayer from './components/VideoPlayer';
 import Header from './components/Header';
@@ -16,7 +16,7 @@ import axios from "axios";
 export interface Video {
   id: number;
   title: string;
-  user: string;
+  user: string | { username: string };
   duration: number;
   width: number;
   height: number;
@@ -53,7 +53,7 @@ function App() {
     }
   }, []);
 
-// Handle OAuth2 login success
+  // Handle OAuth2 login success
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const token = params.get('token');

@@ -118,4 +118,36 @@ public class VideosController {
         }
         return filename.substring(lastDot);
     }
+    @PostMapping("/{id}/comments")
+    public ResponseEntity<?> addComment(@PathVariable Long id, @RequestBody Map<String, String> payload, Authentication authentication) {
+        String content = payload.get("content");
+        if (content == null || content.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Comment content cannot be empty"));
+        }
+
+        User user = null;
+        if (authentication != null && authentication.getName() != null) {
+            String email = authentication.getName();
+            Optional<User> userOpt = userRepository.findByEmail(email);
+            if (userOpt.isPresent()) {
+                user = userOpt.get();
+            }
+        }
+
+        if (user == null) {
+            return ResponseEntity.status(403).body(Map.of("error", "User must be logged in to comment"));
+        }
+
+        try {
+            com.tecnocampus.LS2.protube_back.domain.Comment comment = new com.tecnocampus.LS2.protube_back.domain.Comment();
+            comment.setContent(content);
+            comment.setUser(user);
+            
+            videoService.addComment(id, comment);
+            
+            return ResponseEntity.ok().body(Map.of("message", "Comment added successfully"));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(404).body(Map.of("error", e.getMessage()));
+        }
+    }
 }

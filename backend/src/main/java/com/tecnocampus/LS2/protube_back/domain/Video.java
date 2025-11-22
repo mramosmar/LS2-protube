@@ -22,7 +22,6 @@ public class Video {
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    @NotNull
     private Long duration;
 
     private Integer width;

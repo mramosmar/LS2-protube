@@ -52,10 +52,14 @@ const VideoGrid = ({ videos, onVideoSelect }: VideoGridProps) => {
             <VideoThumbnailHybrid video={video} size="medium" showCategory={true} />
           </ThumbnailErrorBoundary>
           <div className="video-info">
-            <div className="video-avatar">{video.user.charAt(0).toUpperCase()}</div>
+            <div className="video-avatar">
+              {(typeof video.user === 'string' ? video.user : video.user?.username || '?').charAt(0).toUpperCase()}
+            </div>
             <div className="video-details">
               <h3 className="video-title">{video.title}</h3>
-              <p className="video-user">{video.user}</p>
+              <p className="video-user">
+                {typeof video.user === 'string' ? video.user : video.user?.username || 'Unknown'}
+              </p>
               <div className="video-metadata">
                 <span className="video-views">{formatViews(video.id)}</span>
                 <span className="video-separator">•</span>
