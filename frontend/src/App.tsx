@@ -1,6 +1,6 @@
 import './App.css';
 import { useMemo, useState, useEffect } from 'react';
-import { Routes, Route, useNavigate, useParams } from 'react-router-dom';
+import {Routes, Route, useNavigate, useParams, useLocation} from 'react-router-dom';
 import { useAllVideos } from './useAllVideos';
 import VideoPlayer from './components/VideoPlayer';
 import Header from './components/Header';
@@ -11,6 +11,7 @@ import { getRelatedVideos } from './utils/videoRecommendations';
 import RegisterModal from './pages/RegisterModal.tsx';
 import UploadVideoModal from './pages/UploadVideoModal.tsx';
 import { authService } from '../services/authService';
+import axios from "axios";
 
 export interface Video {
   id: number;
@@ -41,6 +42,7 @@ function App() {
   const [currentUser, setCurrentUser] = useState<{ username: string } | null>(null);
   const { loading, message, value: videos, refetch } = useAllVideos();
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Check authentication status on mount
   useEffect(() => {
@@ -51,6 +53,14 @@ function App() {
     }
   }, []);
 
+// Handle OAuth2 login success
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const token = params.get('token');
+    if (token) {
+      handleOAuth2LoginSuccess(token);
+    }
+  }, [location]);
   // Handler for search
   const handleSearchChange = (term: string) => {
     setSearchTerm(term);
@@ -133,6 +143,27 @@ function App() {
     const user = authService.getCurrentUser();
     if (user) {
       setIsAuthenticated(true);
+      setCurrentUser({ username: user.username });
+
+      // Only store the token if it exists
+      if (user.token) {
+      }
+    }
+  };
+
+  axios.interceptors.request.use((config) => {
+    const token = localStorage.getItem('authToken');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  }, (error) => {
+    return Promise.reject(error);
+  });
+  const handleOAuth2LoginSuccess = (token: string) => {
+    setIsAuthenticated(true);
+    const user = authService.getCurrentUser();
+    if (user) {
       setCurrentUser({ username: user.username });
     }
   };

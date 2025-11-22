@@ -3,6 +3,7 @@ import com.tecnocampus.LS2.protube_back.application.OAuth2UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -11,6 +12,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
+import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -32,6 +34,7 @@ public class SecurityConfig {
     }
 
     @Autowired
+    @Lazy
     private OAuth2UserService oAuth2UserService;
 
     @Bean
@@ -75,7 +78,15 @@ public class SecurityConfig {
                         .userInfoEndpoint(userInfo -> userInfo
                                 .userService(oAuth2UserService)
                         )
-                        .defaultSuccessUrl("http://localhost:5173", true)
+                        .successHandler((request, response, authentication) -> {
+                            DefaultOAuth2User oauthUser = (DefaultOAuth2User) authentication.getPrincipal();
+                            String email = oauthUser.getAttribute("email");
+
+                            String token = JwtTokenProvider.generateToken(email);
+
+                            //  al frontend con el token en la URL
+                            response.sendRedirect("http://localhost:5173?token=" + token);
+                        })
                         .failureUrl("/login?error=true")
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

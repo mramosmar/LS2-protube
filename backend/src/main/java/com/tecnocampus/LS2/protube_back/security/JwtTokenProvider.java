@@ -12,14 +12,15 @@ import java.util.Date;
 
 @Component
 public class JwtTokenProvider {
-    private final SecretKey key;
+    private static final SecretKey key = Keys.hmacShaKeyFor(
+            "QgNKOkss0g5bTAPjj0A/VukQ+8dOT5Oy8fisoqTuAsM=".getBytes(StandardCharsets.UTF_8)
+    );
 
     public JwtTokenProvider() {
-        String secretKey = "QgNKOkss0g5bTAPjj0A/VukQ+8dOT5Oy8fisoqTuAsM=";
-        this.key = Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
+        // Constructor can be empty or removed if no additional initialization is needed
     }
 
-    public String generateToken(String email) {
+    public static String generateToken(String email) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + 3600000);
 
@@ -34,9 +35,9 @@ public class JwtTokenProvider {
     public boolean validateToken(String token) {
         try {
             Jwts.parserBuilder()
-                .setSigningKey(key)
-                .build()
-                .parseClaimsJws(token);
+                    .setSigningKey(key)
+                    .build()
+                    .parseClaimsJws(token);
             return true;
         } catch (Exception e) {
             return false;
@@ -45,10 +46,10 @@ public class JwtTokenProvider {
 
     public String getSubject(String token) {
         Claims claims = Jwts.parserBuilder()
-            .setSigningKey(key)
-            .build()
-            .parseClaimsJws(token)
-            .getBody();
+                .setSigningKey(key)
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
         return claims.getSubject();
     }
 }
