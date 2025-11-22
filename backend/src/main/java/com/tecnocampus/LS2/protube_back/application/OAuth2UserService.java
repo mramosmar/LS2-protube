@@ -16,8 +16,8 @@ import java.util.UUID;
 
 @Service
 public class OAuth2UserService extends DefaultOAuth2UserService {
-    private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final UserRepository userRepository;
 
     public OAuth2UserService(UserRepository userRepository, @Lazy PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
@@ -39,11 +39,12 @@ public class OAuth2UserService extends DefaultOAuth2UserService {
                     newUser.setEmail(email);
                     newUser.setUsername(name);
                     newUser.setPassword(passwordEncoder.encode(UUID.randomUUID().toString()));
+                    newUser.setRole("USER");
                     return userRepository.save(newUser);
                 });
 
         return new DefaultOAuth2User(
-                Collections.singleton(() -> "ROLE_USER"),
+                Collections.singleton(() -> user.getRole()),
                 oauth2User.getAttributes(),
                 "email"
         );

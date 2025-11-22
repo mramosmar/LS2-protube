@@ -68,7 +68,7 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/h2-console/**").permitAll()
-                        .requestMatchers("/api/videos/upload").authenticated()
+                        .requestMatchers("/api/videos/upload").hasAuthority("USER")
                         .anyRequest().permitAll()
                 )
                 .oauth2Login(oauth2 -> oauth2
