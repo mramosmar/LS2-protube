@@ -1,0 +1,17 @@
+{
+  "duration" : 10,
+  "thumbnail" : "1.png",
+  "meta" : {
+    "comments" : [ ],
+    "description" : "Test Description",
+    "categories" : [ ],
+    "views" : 0,
+    "tags" : [ ],
+    "likes" : 0
+  },
+  "width" : 1920,
+  "id" : 1,
+  "title" : "Test Video",
+  "user" : "Unknown",
+  "height" : 1080
+}

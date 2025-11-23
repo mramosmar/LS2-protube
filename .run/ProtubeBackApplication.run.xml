@@ -1,5 +1,7 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="ProtubeBackApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
+    <option name="ALTERNATIVE_JRE_PATH" value="corretto-21" />
+    <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="true" />
     <envs>
       <env name="ENV_PROTUBE_GOOGLE_CLIENT_ID" value="24438372161-eqf7bjqcfmgcg7vpj4fovds0g8869ge2.apps.googleusercontent.com" />
       <env name="ENV_PROTUBE_GOOGLE_CLIENT_SECRET" value="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" />

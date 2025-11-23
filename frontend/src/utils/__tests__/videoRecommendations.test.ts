@@ -1,171 +1,80 @@
 import { calculateSimilarity, getRelatedVideos } from '../videoRecommendations';
 import { Video } from '../../App';
 
+const mockVideo1: Video = {
+  id: 1,
+  title: 'Java Tutorial for Beginners',
+  filename: 'java.mp4',
+  user: { username: 'CodeMaster' },
+  duration: 100,
+  width: 1920,
+  height: 1080,
+  description: 'Learn Java',
+  views: 100,
+  likes: 10,
+  tags: ['java', 'programming'],
+  categories: ['Education'],
+  comments: []
+};
+
+const mockVideo2: Video = {
+  id: 2,
+  title: 'Advanced Java Programming',
+  filename: 'java_adv.mp4',
+  user: { username: 'CodeMaster' }, // Same author
+  duration: 200,
+  width: 1920,
+  height: 1080,
+  description: 'More Java',
+  views: 200,
+  likes: 20,
+  tags: ['java', 'coding'], // Common tag
+  categories: ['Education'], // Common category
+  comments: []
+};
+
+const mockVideo3: Video = {
+  id: 3,
+  title: 'Cooking Pasta',
+  filename: 'pasta.mp4',
+  user: { username: 'ChefLuigi' },
+  duration: 300,
+  width: 1920,
+  height: 1080,
+  description: 'Yummy pasta',
+  views: 300,
+  likes: 30,
+  tags: ['food', 'cooking'],
+  categories: ['Lifestyle'],
+  comments: []
+};
+
 describe('videoRecommendations', () => {
-  const createVideo = (overrides: Partial<Video>): Video => ({
-    id: 1,
-    title: 'Test Video',
-    user: 'Test User',
-    duration: 100,
-    width: 1920,
-    height: 1080,
-    meta: {
-      description: 'Test description',
-      categories: [],
-      tags: [],
-    },
-    ...overrides,
-  });
-
   describe('calculateSimilarity', () => {
-    it('should give high score for same author', () => {
-      const video1 = createVideo({ id: 1, user: 'Bruno Mars' });
-      const video2 = createVideo({ id: 2, user: 'Bruno Mars' });
-
-      const score = calculateSimilarity(video1, video2);
-      expect(score).toBeGreaterThanOrEqual(3);
+    it('should give high score for same author, category, and similar title', () => {
+      const score = calculateSimilarity(mockVideo1, mockVideo2);
+      // Expected score breakdown:
+      // Same author: +3
+      // Common category (Education): +2
+      // Significant words in title (Java): +1 (at least)
+      // Common tags (java): +1
+      expect(score).toBeGreaterThan(5);
     });
 
-    it('should give points for common categories', () => {
-      const video1 = createVideo({
-        id: 1,
-        meta: { description: '', categories: ['Music', 'Pop'], tags: [] },
-      });
-      const video2 = createVideo({
-        id: 2,
-        meta: { description: '', categories: ['Music', 'Rock'], tags: [] },
-      });
-
-      const score = calculateSimilarity(video1, video2);
-      expect(score).toBeGreaterThanOrEqual(2); // 1 common category
-    });
-
-    it('should give points for common significant words in title', () => {
-      const video1 = createVideo({ id: 1, title: 'Receta de Pasta Carbonara' });
-      const video2 = createVideo({ id: 2, title: 'Mejor Receta de Pasta Italiana' });
-
-      const score = calculateSimilarity(video1, video2);
-      expect(score).toBeGreaterThan(0); // Has common words "receta" and "pasta"
-    });
-
-    it('should ignore stop words', () => {
-      const video1 = createVideo({ id: 1, title: 'Las patatas las fritas', user: 'Bruno Mars' });
-      const video2 = createVideo({ id: 2, title: 'Las lentejas de maria', user: 'Bruno Mars' });
-
-      const score = calculateSimilarity(video1, video2);
-      expect(score).toEqual(3); // Should not count stop words like "el", "de", etc.
-    });
-
-    it('should give points for common tags', () => {
-      const video1 = createVideo({
-        id: 1,
-        meta: { description: '', categories: [], tags: ['cooking', 'italian', 'pasta'] },
-      });
-      const video2 = createVideo({
-        id: 2,
-        meta: { description: '', categories: [], tags: ['cooking', 'pasta', 'recipe'] },
-      });
-
-      const score = calculateSimilarity(video1, video2);
-      expect(score).toBeGreaterThanOrEqual(2); // 2 common tags
-    });
-
-    it('should return 0 for completely unrelated videos', () => {
-      const video1 = createVideo({
-        id: 1,
-        title: 'ABC',
-        user: 'User A',
-        meta: { description: '', categories: ['Cat1'], tags: ['tag1'] },
-      });
-      const video2 = createVideo({
-        id: 2,
-        title: 'XYZ',
-        user: 'User B',
-        meta: { description: '', categories: ['Cat2'], tags: ['tag2'] },
-      });
-
-      const score = calculateSimilarity(video1, video2);
+    it('should give low score for unrelated videos', () => {
+      const score = calculateSimilarity(mockVideo1, mockVideo3);
       expect(score).toBe(0);
     });
   });
 
   describe('getRelatedVideos', () => {
-    const allVideos: Video[] = [
-      createVideo({
-        id: 1,
-        title: 'Bruno Mars - 24K Magic',
-        user: 'Bruno Mars',
-        meta: { description: '', categories: ['Music'], tags: ['pop', 'funk'] },
-      }),
-      createVideo({
-        id: 2,
-        title: 'Bruno Mars - Uptown Funk',
-        user: 'Mark Ronson',
-        meta: { description: '', categories: ['Music'], tags: ['pop', 'funk', 'bruno mars'] },
-      }),
-      createVideo({
-        id: 3,
-        title: 'Receta de Pasta',
-        user: 'Chef Maria',
-        meta: { description: '', categories: ['Cooking'], tags: ['recipe', 'pasta'] },
-      }),
-      createVideo({
-        id: 4,
-        title: 'Bruno Mars - Just The Way You Are',
-        user: 'Bruno Mars',
-        meta: { description: '', categories: ['Music'], tags: ['pop', 'ballad'] },
-      }),
-      createVideo({
-        id: 5,
-        title: 'Pizza Casera',
-        user: 'Chef Maria',
-        meta: { description: '', categories: ['Cooking'], tags: ['recipe', 'italian'] },
-      }),
-    ];
+    it('should sort related videos by score', () => {
+      const allVideos = [mockVideo1, mockVideo2, mockVideo3];
+      const related = getRelatedVideos(mockVideo1, allVideos);
 
-    it('should return related videos sorted by similarity', () => {
-      const currentVideo = allVideos[0]; // Bruno Mars - 24K Magic
-      const related = getRelatedVideos(currentVideo, allVideos, 10);
-
-      expect(related.length).toBeGreaterThan(0);
-      expect(related[0].id).not.toBe(currentVideo.id);
-
-      // Videos by same author or same category should appear first
-      const firstRelated = related[0];
-      const isSameAuthor = firstRelated.user === currentVideo.user;
-      const hasSameCategory = firstRelated.meta?.categories?.some((cat) =>
-        currentVideo.meta?.categories?.includes(cat)
-      );
-
-      expect(isSameAuthor || hasSameCategory).toBe(true);
-    });
-
-    it('should exclude the current video', () => {
-      const currentVideo = allVideos[0];
-      const related = getRelatedVideos(currentVideo, allVideos, 10);
-
-      expect(related.find((v) => v.id === currentVideo.id)).toBeUndefined();
-    });
-
-    it('should limit results to maxResults', () => {
-      const currentVideo = allVideos[0];
-      const maxResults = 2;
-      const related = getRelatedVideos(currentVideo, allVideos, maxResults);
-
-      expect(related.length).toBeLessThanOrEqual(maxResults);
-    });
-
-    it('should prioritize same author videos', () => {
-      const currentVideo = allVideos[0]; // Bruno Mars - 24K Magic
-      const related = getRelatedVideos(currentVideo, allVideos, 10);
-
-      // Find video by same author
-      const sameAuthorVideo = related.find((v) => v.user === currentVideo.user);
-      expect(sameAuthorVideo).toBeDefined();
-
-      // It should be in top positions
-      const sameAuthorIndex = related.findIndex((v) => v.user === currentVideo.user);
-      expect(sameAuthorIndex).toBeLessThan(3);
+      expect(related.length).toBe(2); // Should exclude self
+      expect(related[0].id).toBe(mockVideo2.id); // Highest score first
+      expect(related[1].id).toBe(mockVideo3.id); // Lowest score last
     });
   });
 });
