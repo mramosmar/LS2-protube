@@ -11,9 +11,7 @@ interface VideoThumbnailHybridProps {
     thumbnail?: string;
     user: string | { username: string };
     duration: number;
-    meta?: {
-      categories?: string[];
-    };
+    categories?: string[];
   };
   size?: 'small' | 'medium' | 'large';
   showCategory?: boolean;

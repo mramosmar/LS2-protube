@@ -4,11 +4,9 @@ interface FallbackThumbnailProps {
   video: {
     id: number;
     title: string;
-    user: string;
+    user: string | { username: string };
     duration: number;
-    meta?: {
-      categories?: string[];
-    };
+    categories?: string[];
   };
   size?: 'small' | 'medium' | 'large';
   showCategory?: boolean;
@@ -59,8 +57,8 @@ const FallbackThumbnail: React.FC<FallbackThumbnailProps> = ({ video, size = 'me
 
         <div className="thumbnail-overlay">
           <div className="video-duration">{formatDuration(video.duration)}</div>
-          {showCategory && video.meta?.categories && video.meta.categories.length > 0 && (
-            <div className="video-category">{video.meta.categories[0]}</div>
+          {showCategory && video.categories && video.categories.length > 0 && (
+            <div className="video-category">{video.categories[0]}</div>
           )}
         </div>
       </div>

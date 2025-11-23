@@ -12,6 +12,12 @@ import RegisterModal from './pages/RegisterModal.tsx';
 import UploadVideoModal from './pages/UploadVideoModal.tsx';
 import { authService } from '../services/authService';
 import axios from 'axios';
+export interface Comment {
+  id?: number;
+  content: string;
+  user: string | { username: string };
+}
+
 export interface Video {
   id: number;
   title: string;
@@ -21,15 +27,12 @@ export interface Video {
   duration: number;
   width: number;
   height: number;
-  meta?: {
-    description: string;
-    categories: string[];
-    tags: string[];
-    comments?: Array<{
-      text: string;
-      author: string;
-    }>;
-  };
+  description: string;
+  views: number;
+  likes: number;
+  tags: string[];
+  categories: string[];
+  comments: Comment[];
 }
 
 function App() {
@@ -75,7 +78,7 @@ function App() {
   // Get unique categories from videos
   const categories = useMemo(() => {
     if (!videos) return [];
-    const allCategories = videos.flatMap((video) => video.meta?.categories || []);
+    const allCategories = videos.flatMap((video) => video.categories || []);
     return ['all', ...Array.from(new Set(allCategories))];
   }, [videos]);
 
@@ -86,7 +89,7 @@ function App() {
     return videos
       .filter((video) => {
         if (searchTerm === '') {
-          const matchesCategory = selectedCategory === 'all' || video.meta?.categories?.includes(selectedCategory);
+          const matchesCategory = selectedCategory === 'all' || video.categories?.includes(selectedCategory);
           return matchesCategory;
         }
 
@@ -99,7 +102,7 @@ function App() {
         // Only search in video title for more precise results
         const matchesSearch = wordBoundaryRegex.test(video.title);
 
-        const matchesCategory = selectedCategory === 'all' || video.meta?.categories?.includes(selectedCategory);
+        const matchesCategory = selectedCategory === 'all' || video.categories?.includes(selectedCategory);
 
         return matchesSearch && matchesCategory;
       })

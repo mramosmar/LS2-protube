@@ -9,11 +9,8 @@ interface VideoGridProps {
 }
 
 const VideoGrid = ({ videos, onVideoSelect }: VideoGridProps) => {
-  // Function to format view count (deterministic based on video ID)
-  const formatViews = (id: number): string => {
-    // Generate deterministic value using a simple hash function
-    const seed = (id * 9301 + 49297) % 233280;
-    const views = (seed % 1000000) + id * 1000;
+  // Function to format view count
+  const formatViews = (views: number): string => {
     if (views > 1000000) {
       return `${(views / 1000000).toFixed(1)}M visualizaciones`;
     } else if (views > 1000) {
@@ -61,7 +58,7 @@ const VideoGrid = ({ videos, onVideoSelect }: VideoGridProps) => {
                 {typeof video.user === 'string' ? video.user : video.user?.username || 'Unknown'}
               </p>
               <div className="video-metadata">
-                <span className="video-views">{formatViews(video.id)}</span>
+                <span className="video-views">{formatViews(video.views)}</span>
                 <span className="video-separator">•</span>
                 <span className="video-time">{getUploadTime(video.id)}</span>
               </div>

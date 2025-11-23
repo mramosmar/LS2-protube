@@ -4,6 +4,12 @@ import { getEnv } from './utils/Env';
 
 type LoadingState = 'loading' | 'success' | 'error' | 'idle';
 
+interface Comment {
+  id?: number;
+  content: string;
+  user: string | { username: string };
+}
+
 interface Video {
   id: number;
   title: string;
@@ -13,11 +19,12 @@ interface Video {
   duration: number;
   width: number;
   height: number;
-  meta?: {
-    description: string;
-    categories: string[];
-    tags: string[];
-  };
+  description: string;
+  views: number;
+  likes: number;
+  tags: string[];
+  categories: string[];
+  comments: Comment[];
 }
 
 export function useAllVideos() {
