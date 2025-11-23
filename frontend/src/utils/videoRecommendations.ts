@@ -416,14 +416,26 @@ function areWordsRelated(word1: string, word2: string): boolean {
 }
 
 /**
+ * Helper to safely get username from Video object
+ */
+function getUsername(user: string | { username: string } | null | undefined): string {
+  if (!user) return '';
+  if (typeof user === 'string') return user;
+  return user.username || '';
+}
+
+/**
  * Calcula la similitud entre dos videos basándose en diferentes criterios
  * y devuelve una puntuación de similitud.
  */
 export function calculateSimilarity(video1: Video, video2: Video): number {
   let score = 0;
 
+  const user1 = getUsername(video1.user);
+  const user2 = getUsername(video2.user);
+
   // 1. Mismo autor (peso: 3 puntos)
-  if (video1.user.toLowerCase() === video2.user.toLowerCase()) {
+  if (user1 && user2 && user1.toLowerCase() === user2.toLowerCase()) {
     score += 3;
   }
 
@@ -688,11 +700,17 @@ export function groupRelatedVideosByCategory(currentVideo: Video, relatedVideos:
   });
 
   // Agregar videos del mismo autor si existen
-  const sameAuthorVideos = relatedVideos.filter(
-    (video) => video.user.toLowerCase() === currentVideo.user.toLowerCase()
-  );
-  if (sameAuthorVideos.length > 0) {
-    grouped.set(`Más de ${currentVideo.user}`, sameAuthorVideos);
+  const currentUser = getUsername(currentVideo.user);
+  if (currentUser) {
+    const sameAuthorVideos = relatedVideos.filter(
+      (video) => {
+        const videoUser = getUsername(video.user);
+        return videoUser && currentUser && videoUser.toLowerCase() === currentUser.toLowerCase();
+      }
+    );
+    if (sameAuthorVideos.length > 0) {
+      grouped.set(`Más de ${currentUser}`, sameAuthorVideos);
+    }
   }
 
   return grouped;

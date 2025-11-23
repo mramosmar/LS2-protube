@@ -20,6 +20,7 @@ public class Comment {
 
     @ManyToOne
     @JoinColumn(name = "video_id")
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private Video video;
 
     public Comment() {}

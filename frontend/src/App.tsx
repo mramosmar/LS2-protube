@@ -11,11 +11,12 @@ import { getRelatedVideos } from './utils/videoRecommendations';
 import RegisterModal from './pages/RegisterModal.tsx';
 import UploadVideoModal from './pages/UploadVideoModal.tsx';
 import { authService } from '../services/authService';
-import axios from "axios";
-
+import axios from 'axios';
 export interface Video {
   id: number;
   title: string;
+  filename?: string;
+  thumbnail?: string;
   user: string | { username: string };
   duration: number;
   width: number;

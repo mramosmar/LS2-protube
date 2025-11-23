@@ -12,6 +12,12 @@ interface VideoPlayerProps {
   selectedCategory: string;
 }
 
+const getUsername = (u: string | { username: string } | null | undefined): string => {
+  if (!u) return '';
+  if (typeof u === 'string') return u;
+  return u.username || '';
+};
+
 const VideoPlayer = ({ video, onBack, relatedVideos, onVideoSelect, selectedCategory }: VideoPlayerProps) => {
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [showEndScreen, setShowEndScreen] = useState(false);
@@ -131,8 +137,8 @@ const VideoPlayer = ({ video, onBack, relatedVideos, onVideoSelect, selectedCate
 
     videosWithTitleScore.forEach(({ video: relatedVideo, titleScore }) => {
       // Categorizar por tipo de relación (prioridad)
-      const videoUser = typeof video.user === 'string' ? video.user : video.user?.username || '';
-      const relatedUser = typeof relatedVideo.user === 'string' ? relatedVideo.user : relatedVideo.user?.username || '';
+      const videoUser = getUsername(video.user);
+      const relatedUser = getUsername(relatedVideo.user);
 
       if (relatedUser.toLowerCase() === videoUser.toLowerCase()) {
         groups.sameAuthor.push(relatedVideo);
@@ -246,8 +252,8 @@ const VideoPlayer = ({ video, onBack, relatedVideos, onVideoSelect, selectedCate
 
   // Función para obtener el badge de relación
   const getRelationBadge = (relatedVideo: Video): { text: string; className: string } | null => {
-    const videoUser = typeof video.user === 'string' ? video.user : video.user?.username || '';
-    const relatedUser = typeof relatedVideo.user === 'string' ? relatedVideo.user : relatedVideo.user?.username || '';
+    const videoUser = getUsername(video.user);
+    const relatedUser = getUsername(relatedVideo.user);
 
     if (relatedUser.toLowerCase() === videoUser.toLowerCase()) {
       return { text: 'Mismo autor', className: 'badge-author' };
@@ -356,8 +362,8 @@ const VideoPlayer = ({ video, onBack, relatedVideos, onVideoSelect, selectedCate
               autoPlay
               width="100%"
               height="auto"
-              src={`http://localhost:8080/media/${video.id}.mp4`}
-              poster={`http://localhost:8080/media/${video.id}.webp`}
+              src={`http://localhost:8080/media/${video.filename || video.id + '.mp4'}`}
+              poster={`http://localhost:8080/media/${video.filename ? video.filename.replace('.mp4', '.webp') : video.id + '.webp'}`}
               className="video-element"
               onMouseMove={handleMouseMove}
               onMouseLeave={handleMouseLeave}
@@ -377,7 +383,7 @@ const VideoPlayer = ({ video, onBack, relatedVideos, onVideoSelect, selectedCate
                 <div className="preview-video-container">
                   <video
                     ref={previewVideoRef}
-                    src={`http://localhost:8080/media/${video.id}.mp4`}
+                    src={`http://localhost:8080/media/${video.filename || video.id + '.mp4'}`}
                     muted
                     className="preview-video"
                   />
@@ -428,7 +434,7 @@ const VideoPlayer = ({ video, onBack, relatedVideos, onVideoSelect, selectedCate
                       <div className="end-screen-video-info">
                         <h4 className="end-screen-video-title">{recommendedVideo.title}</h4>
                         <p className="end-screen-video-user">
-                          {typeof recommendedVideo.user === 'string' ? recommendedVideo.user : recommendedVideo.user?.username || 'Unknown'}
+                          {getUsername(recommendedVideo.user)}
                         </p>
                         <p className="end-screen-video-views">{formatViews(recommendedVideo.id)}</p>
                       </div>
@@ -483,11 +489,11 @@ const VideoPlayer = ({ video, onBack, relatedVideos, onVideoSelect, selectedCate
           <div className="channel-section">
             <div className="channel-info">
               <div className="channel-avatar">
-                {(typeof video.user === 'string' ? video.user : video.user?.username || '?').charAt(0).toUpperCase()}
+                {getUsername(video.user).charAt(0).toUpperCase()}
               </div>
               <div className="channel-details">
                 <h3 className="channel-name">
-                  {typeof video.user === 'string' ? video.user : video.user?.username || 'Unknown'}
+                  {getUsername(video.user)}
                 </h3>
                 <p className="channel-subscribers">
                   {Math.floor(((video.id * 6151 + 21377) % 233280) % 1000)}K suscriptores
@@ -560,7 +566,7 @@ const VideoPlayer = ({ video, onBack, relatedVideos, onVideoSelect, selectedCate
                     </div>
                     <div className="related-info">
                       <h4 className="related-title">{relatedVideo.title}</h4>
-                      <p className="related-user">{relatedVideo.user}</p>
+                      <p className="related-user">{getUsername(relatedVideo.user)}</p>
                       <p className="related-views">{formatViews(relatedVideo.id)}</p>
                       {badge && <span className={`relation-badge ${badge.className}`}>{badge.text}</span>}
                     </div>
@@ -583,7 +589,7 @@ const VideoPlayer = ({ video, onBack, relatedVideos, onVideoSelect, selectedCate
                     </div>
                     <div className="related-info">
                       <h4 className="related-title">{relatedVideo.title}</h4>
-                      <p className="related-user">{relatedVideo.user}</p>
+                      <p className="related-user">{getUsername(relatedVideo.user)}</p>
                       <p className="related-views">{formatViews(relatedVideo.id)}</p>
                       {badge && <span className={`relation-badge ${badge.className}`}>{badge.text}</span>}
                     </div>
@@ -606,7 +612,7 @@ const VideoPlayer = ({ video, onBack, relatedVideos, onVideoSelect, selectedCate
                     </div>
                     <div className="related-info">
                       <h4 className="related-title">{relatedVideo.title}</h4>
-                      <p className="related-user">{relatedVideo.user}</p>
+                      <p className="related-user">{getUsername(relatedVideo.user)}</p>
                       <p className="related-views">{formatViews(relatedVideo.id)}</p>
                       {badge && <span className={`relation-badge ${badge.className}`}>{badge.text}</span>}
                     </div>
@@ -629,7 +635,7 @@ const VideoPlayer = ({ video, onBack, relatedVideos, onVideoSelect, selectedCate
                     </div>
                     <div className="related-info">
                       <h4 className="related-title">{relatedVideo.title}</h4>
-                      <p className="related-user">{relatedVideo.user}</p>
+                      <p className="related-user">{getUsername(relatedVideo.user)}</p>
                       <p className="related-views">{formatViews(relatedVideo.id)}</p>
                       {badge && <span className={`relation-badge ${badge.className}`}>{badge.text}</span>}
                     </div>

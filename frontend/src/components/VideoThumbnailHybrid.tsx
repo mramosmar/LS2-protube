@@ -7,7 +7,9 @@ interface VideoThumbnailHybridProps {
   video: {
     id: number;
     title: string;
-    user: string;
+    filename?: string;
+    thumbnail?: string;
+    user: string | { username: string };
     duration: number;
     meta?: {
       categories?: string[];
@@ -23,7 +25,13 @@ const VideoThumbnailHybrid = ({ video, size = 'medium', showCategory = true }: V
   const [isHovering, setIsHovering] = useState(false);
   const [showVideo, setShowVideo] = useState(false);
 
-  const { thumbnailUrl, isLoading, hasError } = useThumbnailUrl(video.id, video.title);
+  // Helper to safely get username
+  const getUsername = (u: string | { username: string }): string => {
+    if (typeof u === 'string') return u;
+    return u.username;
+  };
+
+  const { thumbnailUrl, isLoading, hasError } = useThumbnailUrl(video.id, video.title, video.filename, video.thumbnail);
 
   const imgRef = useRef<HTMLImageElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -82,7 +90,7 @@ const VideoThumbnailHybrid = ({ video, size = 'medium', showCategory = true }: V
       setTimeout(() => {
         if (videoRef.current) {
           videoRef.current.currentTime = 0;
-          videoRef.current.play().catch(() => {});
+          videoRef.current.play().catch(() => { });
         }
       }, 100);
     }, 500);
@@ -140,7 +148,7 @@ const VideoThumbnailHybrid = ({ video, size = 'medium', showCategory = true }: V
         <video
           ref={videoRef}
           className="thumbnail-video"
-          src={`http://localhost:8080/media/${video.id}.mp4`}
+          src={`http://localhost:8080/media/${video.filename || video.id + '.mp4'}`}
           loop
           muted
           playsInline

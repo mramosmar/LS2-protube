@@ -77,12 +77,19 @@ public class VideosController {
             String videoExt = getFileExtension(videoFile.getOriginalFilename());
             String thumbnailExt = getFileExtension(thumbnailFile.getOriginalFilename());
 
+            // Set filename and thumbnail
+            String filename = videoId + videoExt;
+            String thumbnailFilename = videoId + thumbnailExt;
+            
+            video.setFilename(filename);
+            video.setThumbnail(thumbnailFilename);
+
             // Save video file
-            Path videoPath = Paths.get(videoDir, videoId + videoExt);
+            Path videoPath = Paths.get(videoDir, filename);
             Files.write(videoPath, videoFile.getBytes());
 
             // Save thumbnail file
-            Path thumbnailPath = Paths.get(videoDir, videoId + thumbnailExt);
+            Path thumbnailPath = Paths.get(videoDir, thumbnailFilename);
             Files.write(thumbnailPath, thumbnailFile.getBytes());
 
             // Get video duration (simplified)
@@ -93,6 +100,36 @@ public class VideosController {
             
             // Update video with details
             videoService.saveVideo(video);
+
+            // Generate JSON metadata file
+            try {
+                Map<String, Object> jsonMap = new HashMap<>();
+                jsonMap.put("id", videoId);
+                jsonMap.put("width", video.getWidth());
+                jsonMap.put("height", video.getHeight());
+                jsonMap.put("duration", video.getDuration());
+                jsonMap.put("title", video.getTitle());
+                jsonMap.put("user", user != null ? user.getUsername() : "Unknown");
+                jsonMap.put("thumbnail", thumbnailFilename);
+                
+                Map<String, Object> metaMap = new HashMap<>();
+                metaMap.put("description", video.getDescription());
+                metaMap.put("categories", video.getCategories());
+                metaMap.put("tags", video.getTags());
+                metaMap.put("views", video.getViews());
+                metaMap.put("likes", video.getLikes());
+                metaMap.put("comments", new ArrayList<>()); // Empty comments for new video
+                
+                jsonMap.put("meta", metaMap);
+
+                com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+                mapper.enable(com.fasterxml.jackson.databind.SerializationFeature.INDENT_OUTPUT);
+                Path jsonPath = Paths.get(videoDir, videoId + ".json"); // Use ID for JSON filename as per convention
+                mapper.writeValue(jsonPath.toFile(), jsonMap);
+                
+            } catch (Exception e) {
+                e.printStackTrace(); // Log error but don't fail upload
+            }
 
             return ResponseEntity.ok().body(Map.of(
                 "message", "Video uploaded successfully",
@@ -118,6 +155,7 @@ public class VideosController {
         }
         return filename.substring(lastDot);
     }
+
     @PostMapping("/{id}/comments")
     public ResponseEntity<?> addComment(@PathVariable Long id, @RequestBody Map<String, String> payload, Authentication authentication) {
         String content = payload.get("content");

@@ -22,6 +22,7 @@ public class User {
     private String email;
 
     @NotBlank
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private String password;
 
     @NotBlank

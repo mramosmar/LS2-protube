@@ -7,7 +7,9 @@ type LoadingState = 'loading' | 'success' | 'error' | 'idle';
 interface Video {
   id: number;
   title: string;
-  user: string;
+  filename?: string;
+  thumbnail?: string;
+  user: string | { username: string };
   duration: number;
   width: number;
   height: number;
