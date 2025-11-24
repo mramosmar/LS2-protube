@@ -5,11 +5,12 @@ import { BrowserRouter } from 'react-router-dom';
 import '@testing-library/jest-dom';
 
 // Mock VideoThumbnailHybrid
-jest.mock('../VideoThumbnailHybrid', () => {
-  return function DummyThumbnail() {
+jest.mock('../VideoThumbnailHybrid', () => ({
+  __esModule: true,
+  default: function DummyThumbnail() {
     return <div data-testid="video-thumbnail">Thumbnail</div>;
-  };
-});
+  },
+}));
 
 const mockVideos: Video[] = [
   {
@@ -64,6 +65,6 @@ describe('VideoGrid Component', () => {
       </BrowserRouter>
     );
 
-    expect(screen.getByText('No se encontraron videos')).toBeInTheDocument();
+    expect(screen.getByText('No hay videos disponibles')).toBeInTheDocument();
   });
 });

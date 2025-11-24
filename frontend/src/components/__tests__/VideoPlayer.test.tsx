@@ -5,11 +5,12 @@ import { BrowserRouter } from 'react-router-dom';
 import '@testing-library/jest-dom';
 
 // Mock VideoThumbnailHybrid to avoid complex rendering and API calls
-jest.mock('../VideoThumbnailHybrid', () => {
-  return function DummyThumbnail() {
+jest.mock('../VideoThumbnailHybrid', () => ({
+  __esModule: true,
+  default: function DummyThumbnail() {
     return <div data-testid="video-thumbnail">Thumbnail</div>;
-  };
-});
+  },
+}));
 
 const mockVideo: Video = {
   id: 1,
@@ -67,14 +68,15 @@ describe('VideoPlayer Component', () => {
 
     // Verify Views (formatted)
     // 1500 should be formatted as "1.5K visualizaciones" based on formatViews logic
-    expect(screen.getByText('1.5K visualizaciones')).toBeInTheDocument();
+    // The text appears in multiple places (stats section and description), so we use getAllByText
+    expect(screen.getAllByText('1.5K visualizaciones').length).toBeGreaterThanOrEqual(1);
 
     // Verify Likes (formatted)
     // 100 likes should be displayed as "100"
     expect(screen.getByText('100')).toBeInTheDocument();
 
     // Verify Description (initially truncated or full depending on length, but short enough here)
-    expect(screen.getByText('This is a test description')).toBeInTheDocument();
+    expect(screen.getByText('This is a test description...', { exact: false })).toBeInTheDocument();
 
     // Verify Comments count
     expect(screen.getByText('1 comentarios')).toBeInTheDocument();

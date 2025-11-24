@@ -10,6 +10,9 @@ export default {
   transform: {
     ...tsJestTransformCfg,
   },
+  moduleNameMapper: {
+    '\\.(css|less|scss|sass)$': 'identity-obj-proxy',
+  },
   collectCoverage: true,
   coverageReporters: ['json', 'html'],
   coverageThreshold: {
