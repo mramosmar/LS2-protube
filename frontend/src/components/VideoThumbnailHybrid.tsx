@@ -23,12 +23,6 @@ const VideoThumbnailHybrid = ({ video, size = 'medium', showCategory = true }: V
   const [isHovering, setIsHovering] = useState(false);
   const [showVideo, setShowVideo] = useState(false);
 
-  // Helper to safely get username
-  const getUsername = (u: string | { username: string }): string => {
-    if (typeof u === 'string') return u;
-    return u.username;
-  };
-
   const { thumbnailUrl, isLoading, hasError } = useThumbnailUrl(video.id, video.title, video.filename, video.thumbnail);
 
   const imgRef = useRef<HTMLImageElement>(null);
@@ -88,7 +82,7 @@ const VideoThumbnailHybrid = ({ video, size = 'medium', showCategory = true }: V
       setTimeout(() => {
         if (videoRef.current) {
           videoRef.current.currentTime = 0;
-          videoRef.current.play().catch(() => { });
+          videoRef.current.play().catch(() => {});
         }
       }, 100);
     }, 500);

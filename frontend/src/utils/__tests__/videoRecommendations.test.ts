@@ -14,7 +14,7 @@ const mockVideo1: Video = {
   likes: 10,
   tags: ['java', 'programming'],
   categories: ['Education'],
-  comments: []
+  comments: [],
 };
 
 const mockVideo2: Video = {
@@ -30,7 +30,7 @@ const mockVideo2: Video = {
   likes: 20,
   tags: ['java', 'coding'], // Common tag
   categories: ['Education'], // Common category
-  comments: []
+  comments: [],
 };
 
 const mockVideo3: Video = {
@@ -46,7 +46,7 @@ const mockVideo3: Video = {
   likes: 30,
   tags: ['food', 'cooking'],
   categories: ['Lifestyle'],
-  comments: []
+  comments: [],
 };
 
 describe('videoRecommendations', () => {

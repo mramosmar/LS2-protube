@@ -62,7 +62,7 @@ function App() {
     const params = new URLSearchParams(location.search);
     const token = params.get('token');
     if (token) {
-      handleOAuth2LoginSuccess(token);
+      handleOAuth2LoginSuccess();
     }
   }, [location]);
   // Handler for search
@@ -151,20 +151,24 @@ function App() {
 
       // Only store the token if it exists
       if (user.token) {
+        localStorage.setItem('authToken', user.token);
       }
     }
   };
 
-  axios.interceptors.request.use((config) => {
-    const token = localStorage.getItem('authToken');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+  axios.interceptors.request.use(
+    (config) => {
+      const token = localStorage.getItem('authToken');
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+      return config;
+    },
+    (error) => {
+      return Promise.reject(error);
     }
-    return config;
-  }, (error) => {
-    return Promise.reject(error);
-  });
-  const handleOAuth2LoginSuccess = (token: string) => {
+  );
+  const handleOAuth2LoginSuccess = () => {
     setIsAuthenticated(true);
     const user = authService.getCurrentUser();
     if (user) {
@@ -275,7 +279,7 @@ interface VideoPlayerRouteProps {
 }
 
 function VideoPlayerRoute({ videos, onBack, onVideoSelect, selectedCategory }: VideoPlayerRouteProps) {
-  const { videoId, videoTitle } = useParams<{ videoId: string; videoTitle: string }>();
+  const { videoId } = useParams<{ videoId: string; videoTitle: string }>();
   const navigate = useNavigate();
 
   // Find the video by ID

@@ -18,7 +18,7 @@ const getUsername = (u: string | { username: string } | null | undefined): strin
   return u.username || '';
 };
 
-const VideoPlayer = ({ video, onBack, relatedVideos, onVideoSelect, selectedCategory }: VideoPlayerProps) => {
+const VideoPlayer = ({ video, relatedVideos, onVideoSelect, selectedCategory }: VideoPlayerProps) => {
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [showEndScreen, setShowEndScreen] = useState(false);
   const [autoplayCountdown, setAutoplayCountdown] = useState(10);
@@ -27,7 +27,7 @@ const VideoPlayer = ({ video, onBack, relatedVideos, onVideoSelect, selectedCate
   const [previewPosition, setPreviewPosition] = useState({ x: 0, y: 0 });
   const videoRef = useRef<HTMLVideoElement>(null);
   const previewVideoRef = useRef<HTMLVideoElement>(null);
-  const progressBarRef = useRef<HTMLDivElement>(null);
+  useRef<HTMLDivElement>(null);
   const countdownIntervalRef = useRef<number | null>(null);
 
   // Cleanup countdown on unmount or video change
@@ -427,9 +427,7 @@ const VideoPlayer = ({ video, onBack, relatedVideos, onVideoSelect, selectedCate
                       </div>
                       <div className="end-screen-video-info">
                         <h4 className="end-screen-video-title">{recommendedVideo.title}</h4>
-                        <p className="end-screen-video-user">
-                          {getUsername(recommendedVideo.user)}
-                        </p>
+                        <p className="end-screen-video-user">{getUsername(recommendedVideo.user)}</p>
                         <p className="end-screen-video-views">{formatViews(recommendedVideo.views)}</p>
                       </div>
                     </div>
@@ -482,13 +480,9 @@ const VideoPlayer = ({ video, onBack, relatedVideos, onVideoSelect, selectedCate
 
           <div className="channel-section">
             <div className="channel-info">
-              <div className="channel-avatar">
-                {getUsername(video.user).charAt(0).toUpperCase()}
-              </div>
+              <div className="channel-avatar">{getUsername(video.user).charAt(0).toUpperCase()}</div>
               <div className="channel-details">
-                <h3 className="channel-name">
-                  {getUsername(video.user)}
-                </h3>
+                <h3 className="channel-name">{getUsername(video.user)}</h3>
                 <p className="channel-subscribers">
                   {Math.floor(((video.id * 6151 + 21377) % 233280) % 1000)}K suscriptores
                 </p>

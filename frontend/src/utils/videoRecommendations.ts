@@ -702,12 +702,10 @@ export function groupRelatedVideosByCategory(currentVideo: Video, relatedVideos:
   // Agregar videos del mismo autor si existen
   const currentUser = getUsername(currentVideo.user);
   if (currentUser) {
-    const sameAuthorVideos = relatedVideos.filter(
-      (video) => {
-        const videoUser = getUsername(video.user);
-        return videoUser && currentUser && videoUser.toLowerCase() === currentUser.toLowerCase();
-      }
-    );
+    const sameAuthorVideos = relatedVideos.filter((video) => {
+      const videoUser = getUsername(video.user);
+      return videoUser && currentUser && videoUser.toLowerCase() === currentUser.toLowerCase();
+    });
     if (sameAuthorVideos.length > 0) {
       grouped.set(`Más de ${currentUser}`, sameAuthorVideos);
     }
