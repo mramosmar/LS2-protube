@@ -99,7 +99,7 @@ class VideosControllerTest {
         assertEquals("1.png", responseVideo.getThumbnail());
 
         // Verify that saveVideo was called with correct values
-        verify(videoService, times(1)).saveVideo(argThat(video -> 
+        verify(videoService, times(1)).saveVideo(argThat(video ->
             video.getTitle().equals("Test Video") &&
             video.getDescription() != null && video.getDescription().equals("Test Description") &&
             video.getFilename() != null && video.getFilename().endsWith(".mp4") &&

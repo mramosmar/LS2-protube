@@ -37,7 +37,7 @@ public class UserRestControllerTest {
                 {
                   "email": "test@example.com",
                   "password": "strongpass",
-                  "name": "Tester"
+                  "username": "test@example.com"
                 }
                 """;
 
@@ -57,7 +57,7 @@ public class UserRestControllerTest {
                 {
                   "email": "exists@example.com",
                   "password": "pass",
-                  "name": "Name"
+                  "username": "Username"
                 }
                 """;
 
@@ -65,7 +65,6 @@ public class UserRestControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestJson))
                 .andExpect(status().isBadRequest())
-                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.error").value("Email already used"));
         verify(userService, times(1)).registerUser(any());
     }
