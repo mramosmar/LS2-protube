@@ -20,7 +20,7 @@ public class JwtTokenProvider {
         // Constructor can be empty or removed if no additional initialization is needed
     }
 
-    public static String generateToken(String email) {
+    public String generateToken(String email) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + 3600000);
 

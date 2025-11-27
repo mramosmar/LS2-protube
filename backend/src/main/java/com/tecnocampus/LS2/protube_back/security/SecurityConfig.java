@@ -27,14 +27,16 @@ import java.util.Arrays;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final JwtTokenProvider jwtTokenProvider;
 
     @Autowired
     @Lazy
     private OAuth2UserService oAuth2UserService;
 
     @Autowired
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
+    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter, JwtTokenProvider jwtTokenProvider) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.jwtTokenProvider = jwtTokenProvider;
     }
 
     @Bean
@@ -76,7 +78,7 @@ public class SecurityConfig {
                             DefaultOAuth2User oauthUser = (DefaultOAuth2User) authentication.getPrincipal();
                             String email = oauthUser.getAttribute("email");
 
-                            String token = JwtTokenProvider.generateToken(email);
+                            String token = jwtTokenProvider.generateToken(email);
 
                             // Redirect to frontend with token
                             response.sendRedirect("http://localhost:5173?token=" + token);
