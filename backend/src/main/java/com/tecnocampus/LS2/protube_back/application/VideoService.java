@@ -1,6 +1,7 @@
 package com.tecnocampus.LS2.protube_back.application;
 
 import com.tecnocampus.LS2.protube_back.Persistance.VideoRepository;
+import com.tecnocampus.LS2.protube_back.Persistance.CommentRepository;
 import com.tecnocampus.LS2.protube_back.domain.Comment;
 import com.tecnocampus.LS2.protube_back.domain.Video;
 import jakarta.transaction.Transactional;
@@ -14,10 +15,12 @@ import java.util.Optional;
 public class VideoService {
 
     private final VideoRepository videoRepository;
+    private final CommentRepository commentRepository;
 
     @Autowired
-    public VideoService(VideoRepository videoRepository) {
+    public VideoService(VideoRepository videoRepository, CommentRepository commentRepository) {
         this.videoRepository = videoRepository;
+        this.commentRepository = commentRepository;
     }
 
     public List<Video> getAllVideos() {
@@ -45,6 +48,7 @@ public class VideoService {
         if (videoOpt.isPresent()) {
             Video video = videoOpt.get();
             video.addComment(comment);
+            commentRepository.save(comment);
             videoRepository.save(video);
         } else {
             throw new RuntimeException("Video not found with id: " + videoId);

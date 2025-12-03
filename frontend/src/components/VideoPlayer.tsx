@@ -3,6 +3,7 @@ import { Video } from '../App';
 import VideoThumbnailHybrid from './VideoThumbnailHybrid';
 import './VideoPlayer.css';
 import { calculateTitleSimilarity } from '../utils/videoRecommendations';
+import { commentService } from '../../services/commentService';
 
 interface VideoPlayerProps {
   video: Video;
@@ -10,6 +11,9 @@ interface VideoPlayerProps {
   relatedVideos: Video[];
   onVideoSelect: (video: Video) => void;
   selectedCategory: string;
+  isAuthenticated?: boolean;
+  currentUser?: string;
+  onLoginClick?: () => void;
 }
 
 const getUsername = (u: string | { username: string } | null | undefined): string => {
@@ -18,29 +22,81 @@ const getUsername = (u: string | { username: string } | null | undefined): strin
   return u.username || '';
 };
 
-const VideoPlayer = ({ video, relatedVideos, onVideoSelect, selectedCategory }: VideoPlayerProps) => {
+const VideoPlayer = ({
+  video,
+  relatedVideos,
+  onVideoSelect,
+  selectedCategory,
+  isAuthenticated = false,
+  currentUser,
+  onLoginClick,
+}: VideoPlayerProps) => {
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [showEndScreen, setShowEndScreen] = useState(false);
   const [autoplayCountdown, setAutoplayCountdown] = useState(10);
   const [autoplayCancelled, setAutoplayCancelled] = useState(false);
   const [previewTime, setPreviewTime] = useState<number | null>(null);
   const [previewPosition, setPreviewPosition] = useState({ x: 0, y: 0 });
+  const [newComment, setNewComment] = useState('');
+  const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+  const [commentError, setCommentError] = useState<string | null>(null);
+  const [localComments, setLocalComments] = useState(video.comments || []);
   const videoRef = useRef<HTMLVideoElement>(null);
   const previewVideoRef = useRef<HTMLVideoElement>(null);
-  useRef<HTMLDivElement>(null);
-  const countdownIntervalRef = useRef<number | null>(null);
+  const countdownIntervalRef = useRef<any>(null);
 
   // Cleanup countdown on unmount or video change
   useEffect(() => {
     setShowEndScreen(false);
     setAutoplayCountdown(10);
     setAutoplayCancelled(false);
+    setLocalComments(video.comments || []);
+    setNewComment('');
+    setCommentError(null);
     return () => {
       if (countdownIntervalRef.current) {
         clearInterval(countdownIntervalRef.current);
       }
     };
   }, [video.id]);
+
+  // Handle comment submission
+  const handleSubmitComment = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!isAuthenticated) {
+      setCommentError('Debes iniciar sesión para comentar');
+      if (onLoginClick) {
+        onLoginClick();
+      }
+      return;
+    }
+
+    if (!newComment.trim()) {
+      setCommentError('El comentario no puede estar vacío');
+      return;
+    }
+
+    setIsSubmittingComment(true);
+    setCommentError(null);
+
+    try {
+      await commentService.addComment(video.id, newComment);
+
+      // Add comment locally
+      const newCommentObj = {
+        content: newComment,
+        user: currentUser || 'Usuario',
+      };
+
+      setLocalComments([...localComments, newCommentObj]);
+      setNewComment('');
+    } catch (error) {
+      setCommentError(error instanceof Error ? error.message : 'Error al enviar el comentario');
+    } finally {
+      setIsSubmittingComment(false);
+    }
+  };
 
   // Handle video ended event
   useEffect(() => {
@@ -53,7 +109,7 @@ const VideoPlayer = ({ video, relatedVideos, onVideoSelect, selectedCategory }: 
       setAutoplayCancelled(false);
 
       // Start countdown for autoplay
-      countdownIntervalRef.current = setInterval(() => {
+      countdownIntervalRef.current = window.setInterval(() => {
         setAutoplayCountdown((prev) => {
           if (prev <= 1) {
             if (countdownIntervalRef.current) {
@@ -518,11 +574,61 @@ const VideoPlayer = ({ video, relatedVideos, onVideoSelect, selectedCategory }: 
             </div>
           )}
 
-          {video.comments && video.comments.length > 0 && (
+          {localComments && localComments.length > 0 && (
             <div className="comments-section">
-              <h3 className="comments-title">{video.comments.length} comentarios</h3>
+              <h3 className="comments-title">{localComments.length} comentarios</h3>
+
+              {/* Comment form for authenticated users */}
+              {isAuthenticated ? (
+                <form className="comment-form" onSubmit={handleSubmitComment}>
+                  <div className="comment-input-wrapper">
+                    <div className="comment-avatar-small">{currentUser?.charAt(0).toUpperCase()}</div>
+                    <input
+                      type="text"
+                      className="comment-input"
+                      placeholder="Añade un comentario público..."
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
+                      disabled={isSubmittingComment}
+                    />
+                  </div>
+                  {commentError && <div className="comment-error">{commentError}</div>}
+                  {newComment.trim() && (
+                    <div className="comment-form-actions">
+                      <button
+                        type="button"
+                        className="comment-cancel-btn"
+                        onClick={() => {
+                          setNewComment('');
+                          setCommentError(null);
+                        }}
+                        disabled={isSubmittingComment}
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        type="submit"
+                        className="comment-submit-btn"
+                        disabled={isSubmittingComment || !newComment.trim()}
+                      >
+                        {isSubmittingComment ? 'Enviando...' : 'Comentar'}
+                      </button>
+                    </div>
+                  )}
+                </form>
+              ) : (
+                <div className="comment-login-prompt">
+                  <p>
+                    <button className="comment-login-link" onClick={onLoginClick}>
+                      Inicia sesión
+                    </button>{' '}
+                    para dejar un comentario
+                  </p>
+                </div>
+              )}
+
               <div className="comments-list">
-                {video.comments.slice(0, 5).map((comment, index) => (
+                {localComments.map((comment, index) => (
                   <div key={index} className="comment">
                     <div className="comment-avatar">{getUsername(comment.user).charAt(0).toUpperCase()}</div>
                     <div className="comment-content">
@@ -531,7 +637,6 @@ const VideoPlayer = ({ video, relatedVideos, onVideoSelect, selectedCategory }: 
                     </div>
                   </div>
                 ))}
-                {video.comments.length > 5 && <button className="show-more-comments">Ver más comentarios</button>}
               </div>
             </div>
           )}

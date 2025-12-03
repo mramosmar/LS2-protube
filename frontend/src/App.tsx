@@ -245,6 +245,9 @@ function App() {
                 onBack={handleBackToGrid}
                 onVideoSelect={handleVideoSelect}
                 selectedCategory={selectedCategory}
+                isAuthenticated={isAuthenticated}
+                currentUser={currentUser}
+                onLoginClick={handleLoginClick}
               />
             }
           />
@@ -276,9 +279,20 @@ interface VideoPlayerRouteProps {
   onBack: () => void;
   onVideoSelect: (video: Video) => void;
   selectedCategory: string;
+  isAuthenticated: boolean;
+  currentUser: { username: string } | null;
+  onLoginClick: () => void;
 }
 
-function VideoPlayerRoute({ videos, onBack, onVideoSelect, selectedCategory }: VideoPlayerRouteProps) {
+function VideoPlayerRoute({
+  videos,
+  onBack,
+  onVideoSelect,
+  selectedCategory,
+  isAuthenticated,
+  currentUser,
+  onLoginClick,
+}: VideoPlayerRouteProps) {
   const { videoId } = useParams<{ videoId: string; videoTitle: string }>();
   const navigate = useNavigate();
 
@@ -311,6 +325,9 @@ function VideoPlayerRoute({ videos, onBack, onVideoSelect, selectedCategory }: V
       relatedVideos={getRelatedVideos(video, videos, 25)}
       onVideoSelect={onVideoSelect}
       selectedCategory={selectedCategory}
+      isAuthenticated={isAuthenticated}
+      currentUser={currentUser?.username}
+      onLoginClick={onLoginClick}
     />
   );
 }
