@@ -6,10 +6,10 @@ import VideoPlayer from './components/VideoPlayer';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import VideoGrid from './components/VideoGrid';
-import LoginModal from './pages/LoginModal.tsx';
+import LoginModal from './pages/LoginModal';
 import { getRelatedVideos } from './utils/videoRecommendations';
-import RegisterModal from './pages/RegisterModal.tsx';
-import UploadVideoModal from './pages/UploadVideoModal.tsx';
+import RegisterModal from './pages/RegisterModal';
+import UploadVideoModal from './pages/UploadVideoModal';
 import { authService } from '../services/authService';
 import axios from 'axios';
 export interface Comment {
