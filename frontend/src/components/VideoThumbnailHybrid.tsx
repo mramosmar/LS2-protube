@@ -7,11 +7,11 @@ interface VideoThumbnailHybridProps {
   video: {
     id: number;
     title: string;
-    user: string;
+    filename?: string;
+    thumbnail?: string;
+    user: string | { username: string };
     duration: number;
-    meta?: {
-      categories?: string[];
-    };
+    categories?: string[];
   };
   size?: 'small' | 'medium' | 'large';
   showCategory?: boolean;
@@ -23,7 +23,7 @@ const VideoThumbnailHybrid = ({ video, size = 'medium', showCategory = true }: V
   const [isHovering, setIsHovering] = useState(false);
   const [showVideo, setShowVideo] = useState(false);
 
-  const { thumbnailUrl, isLoading, hasError } = useThumbnailUrl(video.id, video.title);
+  const { thumbnailUrl, isLoading, hasError } = useThumbnailUrl(video.id, video.title, video.filename, video.thumbnail);
 
   const imgRef = useRef<HTMLImageElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -140,7 +140,7 @@ const VideoThumbnailHybrid = ({ video, size = 'medium', showCategory = true }: V
         <video
           ref={videoRef}
           className="thumbnail-video"
-          src={`http://localhost:8080/media/${video.id}.mp4`}
+          src={`http://localhost:8080/media/${video.filename || video.id + '.mp4'}`}
           loop
           muted
           playsInline

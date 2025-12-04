@@ -416,20 +416,32 @@ function areWordsRelated(word1: string, word2: string): boolean {
 }
 
 /**
+ * Helper to safely get username from Video object
+ */
+function getUsername(user: string | { username: string } | null | undefined): string {
+  if (!user) return '';
+  if (typeof user === 'string') return user;
+  return user.username || '';
+}
+
+/**
  * Calcula la similitud entre dos videos basándose en diferentes criterios
  * y devuelve una puntuación de similitud.
  */
 export function calculateSimilarity(video1: Video, video2: Video): number {
   let score = 0;
 
+  const user1 = getUsername(video1.user);
+  const user2 = getUsername(video2.user);
+
   // 1. Mismo autor (peso: 3 puntos)
-  if (video1.user.toLowerCase() === video2.user.toLowerCase()) {
+  if (user1 && user2 && user1.toLowerCase() === user2.toLowerCase()) {
     score += 3;
   }
 
   // 2. Categorías en común (peso: 2 puntos por categoría)
-  const categories1 = video1.meta?.categories || [];
-  const categories2 = video2.meta?.categories || [];
+  const categories1 = video1.categories || [];
+  const categories2 = video2.categories || [];
   const commonCategories = categories1.filter((cat) =>
     categories2.some((cat2) => cat2.toLowerCase() === cat.toLowerCase())
   );
@@ -440,8 +452,8 @@ export function calculateSimilarity(video1: Video, video2: Video): number {
   score += significantWords.length;
 
   // 4. Tags en común (peso: 1 punto por tag)
-  const tags1 = video1.meta?.tags || [];
-  const tags2 = video2.meta?.tags || [];
+  const tags1 = video1.tags || [];
+  const tags2 = video2.tags || [];
   const commonTags = tags1.filter((tag) => tags2.some((tag2) => tag2.toLowerCase() === tag.toLowerCase()));
   score += commonTags.length;
 
@@ -677,22 +689,26 @@ export function getRelatedVideos(currentVideo: Video, allVideos: Video[], maxRes
  */
 export function groupRelatedVideosByCategory(currentVideo: Video, relatedVideos: Video[]): Map<string, Video[]> {
   const grouped = new Map<string, Video[]>();
-  const currentCategories = currentVideo.meta?.categories || [];
+  const currentCategories = currentVideo.categories || [];
 
   // Agregar videos según las categorías del video actual
   currentCategories.forEach((category) => {
-    const videosInCategory = relatedVideos.filter((video) => video.meta?.categories?.includes(category));
+    const videosInCategory = relatedVideos.filter((video) => video.categories?.includes(category));
     if (videosInCategory.length > 0) {
       grouped.set(category, videosInCategory);
     }
   });
 
   // Agregar videos del mismo autor si existen
-  const sameAuthorVideos = relatedVideos.filter(
-    (video) => video.user.toLowerCase() === currentVideo.user.toLowerCase()
-  );
-  if (sameAuthorVideos.length > 0) {
-    grouped.set(`Más de ${currentVideo.user}`, sameAuthorVideos);
+  const currentUser = getUsername(currentVideo.user);
+  if (currentUser) {
+    const sameAuthorVideos = relatedVideos.filter((video) => {
+      const videoUser = getUsername(video.user);
+      return videoUser && currentUser && videoUser.toLowerCase() === currentUser.toLowerCase();
+    });
+    if (sameAuthorVideos.length > 0) {
+      grouped.set(`Más de ${currentUser}`, sameAuthorVideos);
+    }
   }
 
   return grouped;

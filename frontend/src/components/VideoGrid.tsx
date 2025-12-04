@@ -9,11 +9,8 @@ interface VideoGridProps {
 }
 
 const VideoGrid = ({ videos, onVideoSelect }: VideoGridProps) => {
-  // Function to format view count (deterministic based on video ID)
-  const formatViews = (id: number): string => {
-    // Generate deterministic value using a simple hash function
-    const seed = (id * 9301 + 49297) % 233280;
-    const views = (seed % 1000000) + id * 1000;
+  // Function to format view count
+  const formatViews = (views: number): string => {
     if (views > 1000000) {
       return `${(views / 1000000).toFixed(1)}M visualizaciones`;
     } else if (views > 1000) {
@@ -52,12 +49,16 @@ const VideoGrid = ({ videos, onVideoSelect }: VideoGridProps) => {
             <VideoThumbnailHybrid video={video} size="medium" showCategory={true} />
           </ThumbnailErrorBoundary>
           <div className="video-info">
-            <div className="video-avatar">{video.user.charAt(0).toUpperCase()}</div>
+            <div className="video-avatar">
+              {(typeof video.user === 'string' ? video.user : video.user?.username || '?').charAt(0).toUpperCase()}
+            </div>
             <div className="video-details">
               <h3 className="video-title">{video.title}</h3>
-              <p className="video-user">{video.user}</p>
+              <p className="video-user">
+                {typeof video.user === 'string' ? video.user : video.user?.username || 'Unknown'}
+              </p>
               <div className="video-metadata">
-                <span className="video-views">{formatViews(video.id)}</span>
+                <span className="video-views">{formatViews(video.views)}</span>
                 <span className="video-separator">•</span>
                 <span className="video-time">{getUploadTime(video.id)}</span>
               </div>
