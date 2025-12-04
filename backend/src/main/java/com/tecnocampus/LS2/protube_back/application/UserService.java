@@ -32,6 +32,7 @@ public class UserService {
         dtoWithEncodedPassword.setUsername(registrationDTO.getUsername()); // Add this line
 
         User user = new User(dtoWithEncodedPassword);
+        user.setRole("USER"); // Fix: Assign default role
         User savedUser = userRepository.save(user);
 
         UserDTO userDTO = new UserDTO(savedUser);

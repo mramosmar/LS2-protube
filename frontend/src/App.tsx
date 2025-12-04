@@ -1,33 +1,38 @@
 import './App.css';
 import { useMemo, useState, useEffect } from 'react';
-import { Routes, Route, useNavigate, useParams } from 'react-router-dom';
+import { Routes, Route, useNavigate, useParams, useLocation } from 'react-router-dom';
 import { useAllVideos } from './useAllVideos';
 import VideoPlayer from './components/VideoPlayer';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import VideoGrid from './components/VideoGrid';
-import LoginModal from './pages/LoginModal.tsx';
+import LoginModal from './pages/LoginModal';
 import { getRelatedVideos } from './utils/videoRecommendations';
-import RegisterModal from './pages/RegisterModal.tsx';
-import UploadVideoModal from './pages/UploadVideoModal.tsx';
+import RegisterModal from './pages/RegisterModal';
+import UploadVideoModal from './pages/UploadVideoModal';
 import { authService } from '../services/authService';
+import axios from 'axios';
+export interface Comment {
+  id?: number;
+  content: string;
+  user: string | { username: string };
+}
 
 export interface Video {
   id: number;
   title: string;
-  user: string;
+  filename?: string;
+  thumbnail?: string;
+  user: string | { username: string };
   duration: number;
   width: number;
   height: number;
-  meta?: {
-    description: string;
-    categories: string[];
-    tags: string[];
-    comments?: Array<{
-      text: string;
-      author: string;
-    }>;
-  };
+  description: string;
+  views: number;
+  likes: number;
+  tags: string[];
+  categories: string[];
+  comments: Comment[];
 }
 
 function App() {
@@ -41,6 +46,7 @@ function App() {
   const [currentUser, setCurrentUser] = useState<{ username: string } | null>(null);
   const { loading, message, value: videos, refetch } = useAllVideos();
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Check authentication status on mount
   useEffect(() => {
@@ -51,6 +57,14 @@ function App() {
     }
   }, []);
 
+  // Handle OAuth2 login success
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const token = params.get('token');
+    if (token) {
+      handleOAuth2LoginSuccess();
+    }
+  }, [location]);
   // Handler for search
   const handleSearchChange = (term: string) => {
     setSearchTerm(term);
@@ -64,7 +78,7 @@ function App() {
   // Get unique categories from videos
   const categories = useMemo(() => {
     if (!videos) return [];
-    const allCategories = videos.flatMap((video) => video.meta?.categories || []);
+    const allCategories = videos.flatMap((video) => video.categories || []);
     return ['all', ...Array.from(new Set(allCategories))];
   }, [videos]);
 
@@ -75,7 +89,7 @@ function App() {
     return videos
       .filter((video) => {
         if (searchTerm === '') {
-          const matchesCategory = selectedCategory === 'all' || video.meta?.categories?.includes(selectedCategory);
+          const matchesCategory = selectedCategory === 'all' || video.categories?.includes(selectedCategory);
           return matchesCategory;
         }
 
@@ -88,7 +102,7 @@ function App() {
         // Only search in video title for more precise results
         const matchesSearch = wordBoundaryRegex.test(video.title);
 
-        const matchesCategory = selectedCategory === 'all' || video.meta?.categories?.includes(selectedCategory);
+        const matchesCategory = selectedCategory === 'all' || video.categories?.includes(selectedCategory);
 
         return matchesSearch && matchesCategory;
       })
@@ -133,6 +147,31 @@ function App() {
     const user = authService.getCurrentUser();
     if (user) {
       setIsAuthenticated(true);
+      setCurrentUser({ username: user.username });
+
+      // Only store the token if it exists
+      if (user.token) {
+        localStorage.setItem('authToken', user.token);
+      }
+    }
+  };
+
+  axios.interceptors.request.use(
+    (config) => {
+      const token = localStorage.getItem('authToken');
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+      return config;
+    },
+    (error) => {
+      return Promise.reject(error);
+    }
+  );
+  const handleOAuth2LoginSuccess = () => {
+    setIsAuthenticated(true);
+    const user = authService.getCurrentUser();
+    if (user) {
       setCurrentUser({ username: user.username });
     }
   };
@@ -206,6 +245,9 @@ function App() {
                 onBack={handleBackToGrid}
                 onVideoSelect={handleVideoSelect}
                 selectedCategory={selectedCategory}
+                isAuthenticated={isAuthenticated}
+                currentUser={currentUser}
+                onLoginClick={handleLoginClick}
               />
             }
           />
@@ -237,10 +279,21 @@ interface VideoPlayerRouteProps {
   onBack: () => void;
   onVideoSelect: (video: Video) => void;
   selectedCategory: string;
+  isAuthenticated: boolean;
+  currentUser: { username: string } | null;
+  onLoginClick: () => void;
 }
 
-function VideoPlayerRoute({ videos, onBack, onVideoSelect, selectedCategory }: VideoPlayerRouteProps) {
-  const { videoId, videoTitle } = useParams<{ videoId: string; videoTitle: string }>();
+function VideoPlayerRoute({
+  videos,
+  onBack,
+  onVideoSelect,
+  selectedCategory,
+  isAuthenticated,
+  currentUser,
+  onLoginClick,
+}: VideoPlayerRouteProps) {
+  const { videoId } = useParams<{ videoId: string; videoTitle: string }>();
   const navigate = useNavigate();
 
   // Find the video by ID
@@ -272,6 +325,9 @@ function VideoPlayerRoute({ videos, onBack, onVideoSelect, selectedCategory }: V
       relatedVideos={getRelatedVideos(video, videos, 25)}
       onVideoSelect={onVideoSelect}
       selectedCategory={selectedCategory}
+      isAuthenticated={isAuthenticated}
+      currentUser={currentUser?.username}
+      onLoginClick={onLoginClick}
     />
   );
 }

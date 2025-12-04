@@ -3,6 +3,7 @@ import { Video } from '../App';
 import VideoThumbnailHybrid from './VideoThumbnailHybrid';
 import './VideoPlayer.css';
 import { calculateTitleSimilarity } from '../utils/videoRecommendations';
+import { commentService } from '../../services/commentService';
 
 interface VideoPlayerProps {
   video: Video;
@@ -10,31 +11,92 @@ interface VideoPlayerProps {
   relatedVideos: Video[];
   onVideoSelect: (video: Video) => void;
   selectedCategory: string;
+  isAuthenticated?: boolean;
+  currentUser?: string;
+  onLoginClick?: () => void;
 }
 
-const VideoPlayer = ({ video, onBack, relatedVideos, onVideoSelect, selectedCategory }: VideoPlayerProps) => {
+const getUsername = (u: string | { username: string } | null | undefined): string => {
+  if (!u) return '';
+  if (typeof u === 'string') return u;
+  return u.username || '';
+};
+
+const VideoPlayer = ({
+  video,
+  relatedVideos,
+  onVideoSelect,
+  selectedCategory,
+  isAuthenticated = false,
+  currentUser,
+  onLoginClick,
+}: VideoPlayerProps) => {
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [showEndScreen, setShowEndScreen] = useState(false);
   const [autoplayCountdown, setAutoplayCountdown] = useState(10);
   const [autoplayCancelled, setAutoplayCancelled] = useState(false);
   const [previewTime, setPreviewTime] = useState<number | null>(null);
   const [previewPosition, setPreviewPosition] = useState({ x: 0, y: 0 });
+  const [newComment, setNewComment] = useState('');
+  const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+  const [commentError, setCommentError] = useState<string | null>(null);
+  const [localComments, setLocalComments] = useState(video.comments || []);
   const videoRef = useRef<HTMLVideoElement>(null);
   const previewVideoRef = useRef<HTMLVideoElement>(null);
-  const progressBarRef = useRef<HTMLDivElement>(null);
-  const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const countdownIntervalRef = useRef<any>(null);
 
   // Cleanup countdown on unmount or video change
   useEffect(() => {
     setShowEndScreen(false);
     setAutoplayCountdown(10);
     setAutoplayCancelled(false);
+    setLocalComments(video.comments || []);
+    setNewComment('');
+    setCommentError(null);
     return () => {
       if (countdownIntervalRef.current) {
         clearInterval(countdownIntervalRef.current);
       }
     };
   }, [video.id]);
+
+  // Handle comment submission
+  const handleSubmitComment = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!isAuthenticated) {
+      setCommentError('Debes iniciar sesión para comentar');
+      if (onLoginClick) {
+        onLoginClick();
+      }
+      return;
+    }
+
+    if (!newComment.trim()) {
+      setCommentError('El comentario no puede estar vacío');
+      return;
+    }
+
+    setIsSubmittingComment(true);
+    setCommentError(null);
+
+    try {
+      await commentService.addComment(video.id, newComment);
+
+      // Add comment locally
+      const newCommentObj = {
+        content: newComment,
+        user: currentUser || 'Usuario',
+      };
+
+      setLocalComments([...localComments, newCommentObj]);
+      setNewComment('');
+    } catch (error) {
+      setCommentError(error instanceof Error ? error.message : 'Error al enviar el comentario');
+    } finally {
+      setIsSubmittingComment(false);
+    }
+  };
 
   // Handle video ended event
   useEffect(() => {
@@ -47,7 +109,7 @@ const VideoPlayer = ({ video, onBack, relatedVideos, onVideoSelect, selectedCate
       setAutoplayCancelled(false);
 
       // Start countdown for autoplay
-      countdownIntervalRef.current = setInterval(() => {
+      countdownIntervalRef.current = window.setInterval(() => {
         setAutoplayCountdown((prev) => {
           if (prev <= 1) {
             if (countdownIntervalRef.current) {
@@ -95,7 +157,7 @@ const VideoPlayer = ({ video, onBack, relatedVideos, onVideoSelect, selectedCate
     if (selectedCategory === 'all') {
       return relatedVideos;
     }
-    return relatedVideos.filter((v) => v.meta?.categories?.includes(selectedCategory));
+    return relatedVideos.filter((v) => v.categories?.includes(selectedCategory));
   }, [relatedVideos, selectedCategory]);
 
   // Get all videos without category filter for "others" section
@@ -131,11 +193,14 @@ const VideoPlayer = ({ video, onBack, relatedVideos, onVideoSelect, selectedCate
 
     videosWithTitleScore.forEach(({ video: relatedVideo, titleScore }) => {
       // Categorizar por tipo de relación (prioridad)
-      if (relatedVideo.user.toLowerCase() === video.user.toLowerCase()) {
+      const videoUser = getUsername(video.user);
+      const relatedUser = getUsername(relatedVideo.user);
+
+      if (relatedUser.toLowerCase() === videoUser.toLowerCase()) {
         groups.sameAuthor.push(relatedVideo);
       } else if (
-        video.meta?.categories?.some((cat) =>
-          relatedVideo.meta?.categories?.some((cat2) => cat2.toLowerCase() === cat.toLowerCase())
+        video.categories?.some((cat) =>
+          relatedVideo.categories?.some((cat2) => cat2.toLowerCase() === cat.toLowerCase())
         )
       ) {
         groups.sameCategory.push(relatedVideo);
@@ -243,13 +308,16 @@ const VideoPlayer = ({ video, onBack, relatedVideos, onVideoSelect, selectedCate
 
   // Función para obtener el badge de relación
   const getRelationBadge = (relatedVideo: Video): { text: string; className: string } | null => {
-    if (relatedVideo.user.toLowerCase() === video.user.toLowerCase()) {
+    const videoUser = getUsername(video.user);
+    const relatedUser = getUsername(relatedVideo.user);
+
+    if (relatedUser.toLowerCase() === videoUser.toLowerCase()) {
       return { text: 'Mismo autor', className: 'badge-author' };
     }
 
     const commonCategories =
-      video.meta?.categories?.filter((cat) =>
-        relatedVideo.meta?.categories?.some((cat2) => cat2.toLowerCase() === cat.toLowerCase())
+      video.categories?.filter((cat) =>
+        relatedVideo.categories?.some((cat2) => cat2.toLowerCase() === cat.toLowerCase())
       ) || [];
 
     if (commonCategories.length > 0) {
@@ -259,11 +327,8 @@ const VideoPlayer = ({ video, onBack, relatedVideos, onVideoSelect, selectedCate
     return null;
   };
 
-  // Function to format view count (deterministic based on video ID)
-  const formatViews = (id: number): string => {
-    // Generate deterministic value using a simple hash function
-    const seed = (id * 9301 + 49297) % 233280;
-    const views = (seed % 1000000) + id * 1000;
+  // Function to format view count
+  const formatViews = (views: number): string => {
     if (views > 1000000) {
       return `${(views / 1000000).toFixed(1)}M visualizaciones`;
     } else if (views > 1000) {
@@ -283,10 +348,7 @@ const VideoPlayer = ({ video, onBack, relatedVideos, onVideoSelect, selectedCate
     return `hace ${days} ${days === 1 ? 'día' : 'días'}`;
   };
 
-  const getLikes = (id: number): string => {
-    // Generate deterministic value using a simple hash function
-    const seed = (id * 7919 + 37199) % 233280;
-    const likes = (seed % 50000) + id * 100;
+  const getLikes = (likes: number): string => {
     if (likes > 1000) {
       return `${(likes / 1000).toFixed(1)}K`;
     }
@@ -350,8 +412,8 @@ const VideoPlayer = ({ video, onBack, relatedVideos, onVideoSelect, selectedCate
               autoPlay
               width="100%"
               height="auto"
-              src={`http://localhost:8080/media/${video.id}.mp4`}
-              poster={`http://localhost:8080/media/${video.id}.webp`}
+              src={`http://localhost:8080/media/${video.filename || video.id + '.mp4'}`}
+              poster={`http://localhost:8080/media/${video.filename ? video.filename.replace('.mp4', '.webp') : video.id + '.webp'}`}
               className="video-element"
               onMouseMove={handleMouseMove}
               onMouseLeave={handleMouseLeave}
@@ -371,7 +433,7 @@ const VideoPlayer = ({ video, onBack, relatedVideos, onVideoSelect, selectedCate
                 <div className="preview-video-container">
                   <video
                     ref={previewVideoRef}
-                    src={`http://localhost:8080/media/${video.id}.mp4`}
+                    src={`http://localhost:8080/media/${video.filename || video.id + '.mp4'}`}
                     muted
                     className="preview-video"
                   />
@@ -421,8 +483,8 @@ const VideoPlayer = ({ video, onBack, relatedVideos, onVideoSelect, selectedCate
                       </div>
                       <div className="end-screen-video-info">
                         <h4 className="end-screen-video-title">{recommendedVideo.title}</h4>
-                        <p className="end-screen-video-user">{recommendedVideo.user}</p>
-                        <p className="end-screen-video-views">{formatViews(recommendedVideo.id)}</p>
+                        <p className="end-screen-video-user">{getUsername(recommendedVideo.user)}</p>
+                        <p className="end-screen-video-views">{formatViews(recommendedVideo.views)}</p>
                       </div>
                     </div>
                   ))}
@@ -437,7 +499,7 @@ const VideoPlayer = ({ video, onBack, relatedVideos, onVideoSelect, selectedCate
 
           <div className="video-stats">
             <div className="video-stats-left">
-              <span className="video-views-large">{formatViews(video.id)}</span>
+              <span className="video-views-large">{formatViews(video.views)}</span>
               <span className="video-separator">•</span>
               <span className="video-date">{getUploadTime(video.id)}</span>
             </div>
@@ -447,7 +509,7 @@ const VideoPlayer = ({ video, onBack, relatedVideos, onVideoSelect, selectedCate
                 <svg viewBox="0 0 24 24" className="action-icon">
                   <path d="M1 21h4V9H1v12zm22-11c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2z" />
                 </svg>
-                {getLikes(video.id)}
+                {getLikes(video.likes)}
               </button>
 
               <button className="action-button">
@@ -474,9 +536,9 @@ const VideoPlayer = ({ video, onBack, relatedVideos, onVideoSelect, selectedCate
 
           <div className="channel-section">
             <div className="channel-info">
-              <div className="channel-avatar">{video.user.charAt(0).toUpperCase()}</div>
+              <div className="channel-avatar">{getUsername(video.user).charAt(0).toUpperCase()}</div>
               <div className="channel-details">
-                <h3 className="channel-name">{video.user}</h3>
+                <h3 className="channel-name">{getUsername(video.user)}</h3>
                 <p className="channel-subscribers">
                   {Math.floor(((video.id * 6151 + 21377) % 233280) % 1000)}K suscriptores
                 </p>
@@ -485,20 +547,20 @@ const VideoPlayer = ({ video, onBack, relatedVideos, onVideoSelect, selectedCate
             <button className="subscribe-button">Suscribirse</button>
           </div>
 
-          {video.meta?.description && (
+          {video.description && (
             <div className="description-section">
               <div className={`description-content ${showFullDescription ? 'expanded' : ''}`}>
                 <div className="description-metadata">
-                  <span>{formatViews(video.id)}</span>
+                  <span>{formatViews(video.views)}</span>
                   <span>•</span>
                   <span>{getUploadTime(video.id)}</span>
                 </div>
                 <p className="description-text">
-                  {showFullDescription ? video.meta.description : `${video.meta.description.substring(0, 200)}...`}
+                  {showFullDescription ? video.description : `${video.description.substring(0, 200)}...`}
                 </p>
-                {video.meta.tags && video.meta.tags.length > 0 && (
+                {video.tags && video.tags.length > 0 && (
                   <div className="tags-section">
-                    {video.meta.tags.slice(0, 5).map((tag, index) => (
+                    {video.tags.slice(0, 5).map((tag, index) => (
                       <span key={index} className="tag">
                         #{tag}
                       </span>
@@ -512,20 +574,69 @@ const VideoPlayer = ({ video, onBack, relatedVideos, onVideoSelect, selectedCate
             </div>
           )}
 
-          {video.meta?.comments && video.meta.comments.length > 0 && (
+          {localComments && localComments.length > 0 && (
             <div className="comments-section">
-              <h3 className="comments-title">{video.meta.comments.length} comentarios</h3>
+              <h3 className="comments-title">{localComments.length} comentarios</h3>
+
+              {/* Comment form for authenticated users */}
+              {isAuthenticated ? (
+                <form className="comment-form" onSubmit={handleSubmitComment}>
+                  <div className="comment-input-wrapper">
+                    <div className="comment-avatar-small">{currentUser?.charAt(0).toUpperCase()}</div>
+                    <input
+                      type="text"
+                      className="comment-input"
+                      placeholder="Añade un comentario público..."
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
+                      disabled={isSubmittingComment}
+                    />
+                  </div>
+                  {commentError && <div className="comment-error">{commentError}</div>}
+                  {newComment.trim() && (
+                    <div className="comment-form-actions">
+                      <button
+                        type="button"
+                        className="comment-cancel-btn"
+                        onClick={() => {
+                          setNewComment('');
+                          setCommentError(null);
+                        }}
+                        disabled={isSubmittingComment}
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        type="submit"
+                        className="comment-submit-btn"
+                        disabled={isSubmittingComment || !newComment.trim()}
+                      >
+                        {isSubmittingComment ? 'Enviando...' : 'Comentar'}
+                      </button>
+                    </div>
+                  )}
+                </form>
+              ) : (
+                <div className="comment-login-prompt">
+                  <p>
+                    <button className="comment-login-link" onClick={onLoginClick}>
+                      Inicia sesión
+                    </button>{' '}
+                    para dejar un comentario
+                  </p>
+                </div>
+              )}
+
               <div className="comments-list">
-                {video.meta.comments.slice(0, 5).map((comment, index) => (
+                {localComments.map((comment, index) => (
                   <div key={index} className="comment">
-                    <div className="comment-avatar">{comment.author.charAt(0).toUpperCase()}</div>
+                    <div className="comment-avatar">{getUsername(comment.user).charAt(0).toUpperCase()}</div>
                     <div className="comment-content">
-                      <div className="comment-author">{comment.author}</div>
-                      <div className="comment-text">{comment.text}</div>
+                      <div className="comment-author">{getUsername(comment.user)}</div>
+                      <div className="comment-text">{comment.content}</div>
                     </div>
                   </div>
                 ))}
-                {video.meta.comments.length > 5 && <button className="show-more-comments">Ver más comentarios</button>}
               </div>
             </div>
           )}
@@ -548,8 +659,8 @@ const VideoPlayer = ({ video, onBack, relatedVideos, onVideoSelect, selectedCate
                     </div>
                     <div className="related-info">
                       <h4 className="related-title">{relatedVideo.title}</h4>
-                      <p className="related-user">{relatedVideo.user}</p>
-                      <p className="related-views">{formatViews(relatedVideo.id)}</p>
+                      <p className="related-user">{getUsername(relatedVideo.user)}</p>
+                      <p className="related-views">{formatViews(relatedVideo.views)}</p>
                       {badge && <span className={`relation-badge ${badge.className}`}>{badge.text}</span>}
                     </div>
                   </div>
@@ -571,8 +682,8 @@ const VideoPlayer = ({ video, onBack, relatedVideos, onVideoSelect, selectedCate
                     </div>
                     <div className="related-info">
                       <h4 className="related-title">{relatedVideo.title}</h4>
-                      <p className="related-user">{relatedVideo.user}</p>
-                      <p className="related-views">{formatViews(relatedVideo.id)}</p>
+                      <p className="related-user">{getUsername(relatedVideo.user)}</p>
+                      <p className="related-views">{formatViews(relatedVideo.views)}</p>
                       {badge && <span className={`relation-badge ${badge.className}`}>{badge.text}</span>}
                     </div>
                   </div>
@@ -594,8 +705,8 @@ const VideoPlayer = ({ video, onBack, relatedVideos, onVideoSelect, selectedCate
                     </div>
                     <div className="related-info">
                       <h4 className="related-title">{relatedVideo.title}</h4>
-                      <p className="related-user">{relatedVideo.user}</p>
-                      <p className="related-views">{formatViews(relatedVideo.id)}</p>
+                      <p className="related-user">{getUsername(relatedVideo.user)}</p>
+                      <p className="related-views">{formatViews(relatedVideo.views)}</p>
                       {badge && <span className={`relation-badge ${badge.className}`}>{badge.text}</span>}
                     </div>
                   </div>
@@ -617,8 +728,8 @@ const VideoPlayer = ({ video, onBack, relatedVideos, onVideoSelect, selectedCate
                     </div>
                     <div className="related-info">
                       <h4 className="related-title">{relatedVideo.title}</h4>
-                      <p className="related-user">{relatedVideo.user}</p>
-                      <p className="related-views">{formatViews(relatedVideo.id)}</p>
+                      <p className="related-user">{getUsername(relatedVideo.user)}</p>
+                      <p className="related-views">{formatViews(relatedVideo.views)}</p>
                       {badge && <span className={`relation-badge ${badge.className}`}>{badge.text}</span>}
                     </div>
                   </div>

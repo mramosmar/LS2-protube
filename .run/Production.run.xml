@@ -7,7 +7,7 @@
           <option name="delegateBuildToMaven" value="false" />
           <option name="environmentProperties">
             <map>
-              <entry key="ENV_PROTUBE_STORE_DIR" value="C:\Users\AinaBarnet\Desktop\LS2-protube\store" />
+              <entry key="ENV_PROTUBE_STORE_DIR" value="C:\Users\minec\Desktop\store" />
             </map>
           </option>
           <option name="jreName" value="#USE_PROJECT_JDK" />
