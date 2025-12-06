@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import './Header.css';
 
 interface HeaderProps {
@@ -24,6 +25,8 @@ const Header = ({
 }: HeaderProps) => {
   const [showLogoutMenu, setShowLogoutMenu] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -43,6 +46,19 @@ const Header = ({
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    // Navigate to home page to show search results if not already there
+    if (location.pathname !== '/') {
+      navigate('/');
+    }
+  };
+
+  const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    onSearchChange(value);
+    // Navigate to home page when typing in search if not already there
+    if (location.pathname !== '/' && value.length > 0) {
+      navigate('/');
+    }
   };
 
   const handleAvatarClick = () => {
@@ -74,7 +90,7 @@ const Header = ({
               type="text"
               placeholder="Buscar videos..."
               value={searchTerm}
-              onChange={(e) => onSearchChange(e.target.value)}
+              onChange={handleSearchInputChange}
               className="search-input"
             />
             <button type="submit" className="search-button">
