@@ -480,6 +480,16 @@
   box-shadow: 0 6px 20px rgba(25, 118, 210, 0.4);
 }
 
+.action-button.active {
+  background: linear-gradient(135deg, rgba(25, 118, 210, 1) 0%, rgba(33, 150, 243, 1) 100%);
+  border-color: rgba(33, 150, 243, 0.5);
+  box-shadow: 0 4px 16px rgba(25, 118, 210, 0.5);
+}
+
+.action-button.active:hover {
+  background: linear-gradient(135deg, rgba(21, 101, 192, 1) 0%, rgba(25, 118, 210, 1) 100%);
+}
+
 .action-icon {
   width: 18px;
   height: 18px;
@@ -815,7 +825,6 @@
   color: #ccc;
   line-height: 1.4;
 }
-
 
 .sidebar-title {
   font-size: 16px;

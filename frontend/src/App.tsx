@@ -30,6 +30,7 @@ export interface Video {
   description: string;
   views: number;
   likes: number;
+  dislikes?: number;
   tags: string[];
   categories: string[];
   comments: Comment[];

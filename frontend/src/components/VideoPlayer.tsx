@@ -4,6 +4,7 @@ import VideoThumbnailHybrid from './VideoThumbnailHybrid';
 import './VideoPlayer.css';
 import { calculateTitleSimilarity } from '../utils/videoRecommendations';
 import { commentService } from '../../services/commentService';
+import { viewService } from '../../services/viewService';
 
 interface VideoPlayerProps {
   video: Video;
@@ -41,6 +42,11 @@ const VideoPlayer = ({
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [commentError, setCommentError] = useState<string | null>(null);
   const [localComments, setLocalComments] = useState(video.comments || []);
+  const [localViews, setLocalViews] = useState(video.views);
+  const [localLikes, setLocalLikes] = useState(video.likes);
+  const [localDislikes, setLocalDislikes] = useState(video.dislikes || 0);
+  const [userReaction, setUserReaction] = useState<'like' | 'dislike' | null>(null);
+  const [viewCounted, setViewCounted] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const previewVideoRef = useRef<HTMLVideoElement>(null);
   const countdownIntervalRef = useRef<any>(null);
@@ -53,12 +59,32 @@ const VideoPlayer = ({
     setLocalComments(video.comments || []);
     setNewComment('');
     setCommentError(null);
+    setLocalViews(video.views);
+    setViewCounted(false);
     return () => {
       if (countdownIntervalRef.current) {
         clearInterval(countdownIntervalRef.current);
       }
     };
   }, [video.id]);
+
+  // Load reaction state when video changes
+  useEffect(() => {
+    const loadReaction = async () => {
+      try {
+        const result = await viewService.getReaction(video.id);
+        setLocalLikes(result.likes);
+        setLocalDislikes(result.dislikes);
+        setUserReaction(result.userReaction === 'like' ? 'like' : result.userReaction === 'dislike' ? 'dislike' : null);
+      } catch (error) {
+        console.error('Error loading reaction:', error);
+        setLocalLikes(video.likes);
+        setLocalDislikes(video.dislikes || 0);
+        setUserReaction(null);
+      }
+    };
+    loadReaction();
+  }, [video.id, video.likes, video.dislikes]);
 
   // Handle comment submission
   const handleSubmitComment = async (e: React.FormEvent) => {
@@ -95,6 +121,56 @@ const VideoPlayer = ({
       setCommentError(error instanceof Error ? error.message : 'Error al enviar el comentario');
     } finally {
       setIsSubmittingComment(false);
+    }
+  };
+
+  // Handle like button click
+  const handleLike = async () => {
+    if (!isAuthenticated) {
+      if (onLoginClick) {
+        onLoginClick();
+      }
+      return;
+    }
+
+    try {
+      const result = await viewService.likeVideo(video.id);
+      setLocalLikes(result.likes);
+      setLocalDislikes(result.dislikes);
+      setUserReaction(result.userReaction === 'like' ? 'like' : result.userReaction === 'dislike' ? 'dislike' : null);
+    } catch (error) {
+      if (error instanceof Error && error.message === 'Authentication required') {
+        if (onLoginClick) {
+          onLoginClick();
+        }
+      } else {
+        console.error('Error handling like:', error);
+      }
+    }
+  };
+
+  // Handle dislike button click
+  const handleDislike = async () => {
+    if (!isAuthenticated) {
+      if (onLoginClick) {
+        onLoginClick();
+      }
+      return;
+    }
+
+    try {
+      const result = await viewService.dislikeVideo(video.id);
+      setLocalLikes(result.likes);
+      setLocalDislikes(result.dislikes);
+      setUserReaction(result.userReaction === 'like' ? 'like' : result.userReaction === 'dislike' ? 'dislike' : null);
+    } catch (error) {
+      if (error instanceof Error && error.message === 'Authentication required') {
+        if (onLoginClick) {
+          onLoginClick();
+        }
+      } else {
+        console.error('Error handling dislike:', error);
+      }
     }
   };
 
@@ -140,6 +216,32 @@ const VideoPlayer = ({
       }
     };
   }, [video.id]);
+
+  // Increment view count when video starts playing
+  useEffect(() => {
+    const videoElement = videoRef.current;
+    if (!videoElement) return;
+
+    const handleFirstPlay = async () => {
+      if (!viewCounted) {
+        setViewCounted(true);
+        try {
+          const result = await viewService.incrementView(video.id);
+          setLocalViews(result.views);
+        } catch (error) {
+          console.error('Error incrementing view count:', error);
+          // Still update locally even if API fails
+          setLocalViews((prev) => prev + 1);
+        }
+      }
+    };
+
+    videoElement.addEventListener('play', handleFirstPlay);
+
+    return () => {
+      videoElement.removeEventListener('play', handleFirstPlay);
+    };
+  }, [video.id, viewCounted]);
 
   // Handle autoplay when countdown reaches 0
   useEffect(() => {
@@ -499,23 +601,24 @@ const VideoPlayer = ({
 
           <div className="video-stats">
             <div className="video-stats-left">
-              <span className="video-views-large">{formatViews(video.views)}</span>
+              <span className="video-views-large">{formatViews(localViews)}</span>
               <span className="video-separator">•</span>
               <span className="video-date">{getUploadTime(video.id)}</span>
             </div>
 
             <div className="video-actions">
-              <button className="action-button">
+              <button className={`action-button ${userReaction === 'like' ? 'active' : ''}`} onClick={handleLike}>
                 <svg viewBox="0 0 24 24" className="action-icon">
                   <path d="M1 21h4V9H1v12zm22-11c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2z" />
                 </svg>
-                {getLikes(video.likes)}
+                {getLikes(localLikes)}
               </button>
 
-              <button className="action-button">
+              <button className={`action-button ${userReaction === 'dislike' ? 'active' : ''}`} onClick={handleDislike}>
                 <svg viewBox="0 0 24 24" className="action-icon">
                   <path d="M15 3H6c-.83 0-1.54.5-1.84 1.22l-3.02 7.05c-.09.23-.14.47-.14.73v2c0 1.1.9 2 2 2h6.31l-.95 4.57-.03.32c0 .41.17.79.44 1.06L9.83 23l6.59-6.59c.36-.36.58-.86.58-1.41V5c0-1.1-.9-2-2-2z" />
                 </svg>
+                {localDislikes > 0 ? getLikes(localDislikes) : ''}
               </button>
 
               <button className="action-button">
@@ -551,7 +654,7 @@ const VideoPlayer = ({
             <div className="description-section">
               <div className={`description-content ${showFullDescription ? 'expanded' : ''}`}>
                 <div className="description-metadata">
-                  <span>{formatViews(video.views)}</span>
+                  <span>{formatViews(localViews)}</span>
                   <span>•</span>
                   <span>{getUploadTime(video.id)}</span>
                 </div>

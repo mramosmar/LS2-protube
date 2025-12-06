@@ -33,6 +33,7 @@ public class Video {
 
     private Long views = 0L;
     private Long likes = 0L;
+    private Long dislikes = 0L;
 
     @ElementCollection
     @CollectionTable(name = "video_tags", joinColumns = @JoinColumn(name = "video_id"))
@@ -74,6 +75,8 @@ public class Video {
     public void setViews(Long views) { this.views = views; }
     public Long getLikes() { return likes; }
     public void setLikes(Long likes) { this.likes = likes; }
+    public Long getDislikes() { return dislikes; }
+    public void setDislikes(Long dislikes) { this.dislikes = dislikes; }
     public Set<String> getTags() { return tags; }
     public void setTags(Set<String> tags) { this.tags = tags; }
     public Set<String> getCategories() { return categories; }
