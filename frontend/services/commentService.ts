@@ -1,26 +1,39 @@
+import { authService } from './authService';
+
 const API_URL = 'http://localhost:8080/api';
 
+export interface CommentDTO {
+  content: string;
+  videoId: number;
+}
+
+export interface Comment {
+  id: number;
+  content: string;
+  user: string | { username: string };
+}
+
 export const commentService = {
-  async addComment(videoId: number, content: string): Promise<void> {
-    const token = localStorage.getItem('protube_token');
+  async addComment(videoId: number, content: string): Promise<Comment> {
+    const token = authService.getToken();
 
     if (!token) {
-      throw new Error('User must be authenticated to comment');
+      throw new Error('No estás autenticado. Por favor, inicia sesión.');
     }
 
     const response = await fetch(`${API_URL}/videos/${videoId}/comments`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
+        'Authorization': `Bearer ${token}`,
       },
-      body: JSON.stringify({ content }),
       credentials: 'include',
+      body: JSON.stringify({ content }),
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Failed to add comment');
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.error || 'Error al añadir comentario');
     }
 
     return response.json();
