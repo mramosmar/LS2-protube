@@ -9,13 +9,16 @@ class IndexControllerTest {
 
     @Test
     void home() {
+        assertEquals("forward:/index.html", indexController.home());
+    }
 
-        assertEquals("index", indexController.home().getViewName());
+    @Test
+    void forwardVideoRoutes() {
+        assertEquals("forward:/index.html", indexController.forwardVideoRoutes());
     }
 
     @Test
     void logout() {
-
-        assertEquals("logout", indexController.logout().getViewName());
+        assertEquals("logout", indexController.logout());
     }
 }

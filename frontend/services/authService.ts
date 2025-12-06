@@ -82,6 +82,7 @@ export const authService = {
       // Always remove user data and token from localStorage
       localStorage.removeItem(USER_STORAGE_KEY);
       localStorage.removeItem(TOKEN_STORAGE_KEY);
+      localStorage.removeItem('authToken'); // For compatibility
     }
   },
 

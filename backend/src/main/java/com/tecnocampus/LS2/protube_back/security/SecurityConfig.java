@@ -77,11 +77,16 @@ public class SecurityConfig {
                         .successHandler((request, response, authentication) -> {
                             DefaultOAuth2User oauthUser = (DefaultOAuth2User) authentication.getPrincipal();
                             String email = oauthUser.getAttribute("email");
+                            String name = oauthUser.getAttribute("name");
+                            String sub = oauthUser.getAttribute("sub");
+
+                            // Ensure user is saved in database
+                            oAuth2UserService.findOrCreateUser(email, name, sub);
 
                             String token = jwtTokenProvider.generateToken(email);
 
                             // Redirect to frontend with token
-                            response.sendRedirect("http://localhost:5173?token=" + token);
+                            response.sendRedirect("http://localhost:8080?token=" + token);
                         })
                         .failureUrl("/login?error=true")
                 )

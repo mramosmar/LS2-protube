@@ -251,7 +251,10 @@
                         <artifactId>jacoco-maven-plugin</artifactId>
                         <version>0.8.12</version>
                         <configuration>
-                            <excludes>com/tecnocampus/LS2/protube_back/ProtubeBackApplication*</excludes>
+                            <excludes>
+                                <exclude>com/tecnocampus/LS2/protube_back/ProtubeBackApplication*</exclude>
+                                <exclude>com/tecnocampus/LS2/protube_back/application/OAuth2UserService*</exclude>
+                            </excludes>
                         </configuration>
                         <executions>
                             <execution>
@@ -281,7 +284,7 @@
                                                 <limit>
                                                     <counter>LINE</counter>
                                                     <value>COVEREDRATIO</value>
-                                                    <minimum>0</minimum>
+                                                    <minimum>0.5</minimum>
                                                 </limit>
                                             </limits>
                                         </rule>
@@ -291,17 +294,17 @@
                                                 <limit>
                                                     <counter>INSTRUCTION</counter>
                                                     <value>COVEREDRATIO</value>
-                                                    <minimum>0</minimum>
+                                                    <minimum>0.5</minimum>
                                                 </limit>
                                                 <limit>
                                                     <counter>LINE</counter>
                                                     <value>COVEREDRATIO</value>
-                                                    <minimum>0</minimum>
+                                                    <minimum>0.5</minimum>
                                                 </limit>
                                                 <limit>
                                                     <counter>METHOD</counter>
                                                     <value>COVEREDRATIO</value>
-                                                    <minimum>0</minimum>
+                                                    <minimum>0.5</minimum>
                                                 </limit>
                                             </limits>
                                         </rule>

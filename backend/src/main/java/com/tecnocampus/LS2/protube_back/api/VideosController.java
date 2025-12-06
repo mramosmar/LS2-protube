@@ -188,4 +188,93 @@ public class VideosController {
             return ResponseEntity.status(404).body(Map.of("error", e.getMessage()));
         }
     }
+
+    @PostMapping("/{id}/view")
+    public ResponseEntity<?> incrementViews(@PathVariable Long id) {
+        Optional<Video> videoOpt = videoService.incrementViews(id);
+        if (videoOpt.isPresent()) {
+            return ResponseEntity.ok().body(Map.of(
+                "message", "View count incremented",
+                "views", videoOpt.get().getViews()
+            ));
+        }
+        return ResponseEntity.status(404).body(Map.of("error", "Video not found"));
+    }
+
+    @GetMapping("/{id}/reaction")
+    public ResponseEntity<?> getReaction(@PathVariable Long id, Authentication authentication) {
+        User user = null;
+        if (authentication != null && authentication.getName() != null) {
+            String email = authentication.getName();
+            Optional<User> userOpt = userRepository.findByEmail(email);
+            if (userOpt.isPresent()) {
+                user = userOpt.get();
+            }
+        }
+
+        VideoService.ReactionResult result = videoService.getUserReaction(id, user);
+        if (result == null) {
+            return ResponseEntity.status(404).body(Map.of("error", "Video not found"));
+        }
+
+        return ResponseEntity.ok().body(Map.of(
+            "likes", result.likes,
+            "dislikes", result.dislikes,
+            "userReaction", result.userReaction != null ? result.userReaction : ""
+        ));
+    }
+
+    @PostMapping("/{id}/like")
+    public ResponseEntity<?> likeVideo(@PathVariable Long id, Authentication authentication) {
+        if (authentication == null || authentication.getName() == null) {
+            return ResponseEntity.status(401).body(Map.of("error", "Authentication required"));
+        }
+
+        String email = authentication.getName();
+        Optional<User> userOpt = userRepository.findByEmail(email);
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.status(401).body(Map.of("error", "User not found"));
+        }
+
+        VideoService.ReactionResult result = videoService.handleReaction(id, userOpt.get(),
+            com.tecnocampus.LS2.protube_back.domain.VideoReaction.ReactionType.LIKE);
+
+        if (result == null) {
+            return ResponseEntity.status(404).body(Map.of("error", "Video not found"));
+        }
+
+        return ResponseEntity.ok().body(Map.of(
+            "message", "Reaction updated",
+            "likes", result.likes,
+            "dislikes", result.dislikes,
+            "userReaction", result.userReaction != null ? result.userReaction : ""
+        ));
+    }
+
+    @PostMapping("/{id}/dislike")
+    public ResponseEntity<?> dislikeVideo(@PathVariable Long id, Authentication authentication) {
+        if (authentication == null || authentication.getName() == null) {
+            return ResponseEntity.status(401).body(Map.of("error", "Authentication required"));
+        }
+
+        String email = authentication.getName();
+        Optional<User> userOpt = userRepository.findByEmail(email);
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.status(401).body(Map.of("error", "User not found"));
+        }
+
+        VideoService.ReactionResult result = videoService.handleReaction(id, userOpt.get(),
+            com.tecnocampus.LS2.protube_back.domain.VideoReaction.ReactionType.DISLIKE);
+
+        if (result == null) {
+            return ResponseEntity.status(404).body(Map.of("error", "Video not found"));
+        }
+
+        return ResponseEntity.ok().body(Map.of(
+            "message", "Reaction updated",
+            "likes", result.likes,
+            "dislikes", result.dislikes,
+            "userReaction", result.userReaction != null ? result.userReaction : ""
+        ));
+    }
 }

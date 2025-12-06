@@ -4,6 +4,7 @@ import VideoThumbnailHybrid from './VideoThumbnailHybrid';
 import './VideoPlayer.css';
 import { calculateTitleSimilarity } from '../utils/videoRecommendations';
 import { commentService } from '../../services/commentService';
+import { viewService } from '../../services/viewService';
 
 interface VideoPlayerProps {
   video: Video;
@@ -41,9 +42,23 @@ const VideoPlayer = ({
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [commentError, setCommentError] = useState<string | null>(null);
   const [localComments, setLocalComments] = useState(video.comments || []);
+  const [localViews, setLocalViews] = useState(video.views);
+  const [localLikes, setLocalLikes] = useState(video.likes);
+  const [localDislikes, setLocalDislikes] = useState(video.dislikes || 0);
+  const [userReaction, setUserReaction] = useState<'like' | 'dislike' | null>(null);
+  const [viewCounted, setViewCounted] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(true);
+  const [isMuted, setIsMuted] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [showControls, setShowControls] = useState(true);
+  const [volume, setVolume] = useState(1);
+  const [playbackSpeed, setPlaybackSpeed] = useState(1);
+  const [showSpeedMenu, setShowSpeedMenu] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const previewVideoRef = useRef<HTMLVideoElement>(null);
   const countdownIntervalRef = useRef<any>(null);
+  const controlsTimeoutRef = useRef<any>(null);
 
   // Cleanup countdown on unmount or video change
   useEffect(() => {
@@ -53,12 +68,116 @@ const VideoPlayer = ({
     setLocalComments(video.comments || []);
     setNewComment('');
     setCommentError(null);
+    setLocalViews(video.views);
+    setViewCounted(false);
+    setIsPlaying(true);
+    setCurrentTime(0);
+    setDuration(0);
     return () => {
       if (countdownIntervalRef.current) {
         clearInterval(countdownIntervalRef.current);
       }
+      if (controlsTimeoutRef.current) {
+        clearTimeout(controlsTimeoutRef.current);
+      }
     };
   }, [video.id]);
+
+  // Update time and duration
+  useEffect(() => {
+    const loadReaction = async () => {
+      try {
+        const result = await viewService.getReaction(video.id);
+        setLocalLikes(result.likes);
+        setLocalDislikes(result.dislikes);
+        setUserReaction(result.userReaction === 'like' ? 'like' : result.userReaction === 'dislike' ? 'dislike' : null);
+      } catch (error) {
+        console.error('Error loading reaction:', error);
+        setLocalLikes(video.likes);
+        setLocalDislikes(video.dislikes || 0);
+        setUserReaction(null);
+      }
+    };
+
+    loadReaction();
+
+    const videoElement = videoRef.current;
+    if (!videoElement) return;
+
+    const updateTime = () => setCurrentTime(videoElement.currentTime);
+    const updateDuration = () => setDuration(videoElement.duration);
+    const handlePlayState = () => setIsPlaying(!videoElement.paused);
+
+    videoElement.addEventListener('timeupdate', updateTime);
+    videoElement.addEventListener('loadedmetadata', updateDuration);
+    videoElement.addEventListener('play', handlePlayState);
+    videoElement.addEventListener('pause', handlePlayState);
+
+    return () => {
+      videoElement.removeEventListener('timeupdate', updateTime);
+      videoElement.removeEventListener('loadedmetadata', updateDuration);
+      videoElement.removeEventListener('play', handlePlayState);
+      videoElement.removeEventListener('pause', handlePlayState);
+    };
+  }, [video.id]);
+
+  // Auto-hide controls
+  const resetControlsTimeout = () => {
+    setShowControls(true);
+    if (controlsTimeoutRef.current) {
+      clearTimeout(controlsTimeoutRef.current);
+    }
+    if (isPlaying) {
+      controlsTimeoutRef.current = setTimeout(() => {
+        setShowControls(false);
+      }, 3000);
+    }
+  };
+
+  const handlePlayPause = () => {
+    if (videoRef.current) {
+      if (isPlaying) {
+        videoRef.current.pause();
+      } else {
+        videoRef.current.play();
+      }
+      setIsPlaying(!isPlaying);
+    }
+  };
+
+  const handleMuteToggle = () => {
+    if (videoRef.current) {
+      videoRef.current.muted = !isMuted;
+      setIsMuted(!isMuted);
+    }
+  };
+
+  const handleFullscreen = () => {
+    const videoContainer = videoRef.current?.parentElement;
+    if (videoContainer) {
+      if (!document.fullscreenElement) {
+        videoContainer.requestFullscreen();
+      } else {
+        document.exitFullscreen();
+      }
+    }
+  };
+
+  const handleProgressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newTime = parseFloat(e.target.value);
+    if (videoRef.current) {
+      videoRef.current.currentTime = newTime;
+      setCurrentTime(newTime);
+    }
+  };
+
+  const handleSpeedChange = (speed: number) => {
+    if (videoRef.current) {
+      videoRef.current.playbackRate = speed;
+      setPlaybackSpeed(speed);
+      setShowSpeedMenu(false);
+    }
+  };
 
   // Handle comment submission
   const handleSubmitComment = async (e: React.FormEvent) => {
@@ -95,6 +214,56 @@ const VideoPlayer = ({
       setCommentError(error instanceof Error ? error.message : 'Error al enviar el comentario');
     } finally {
       setIsSubmittingComment(false);
+    }
+  };
+
+  // Handle like button click
+  const handleLike = async () => {
+    if (!isAuthenticated) {
+      if (onLoginClick) {
+        onLoginClick();
+      }
+      return;
+    }
+
+    try {
+      const result = await viewService.likeVideo(video.id);
+      setLocalLikes(result.likes);
+      setLocalDislikes(result.dislikes);
+      setUserReaction(result.userReaction === 'like' ? 'like' : result.userReaction === 'dislike' ? 'dislike' : null);
+    } catch (error) {
+      if (error instanceof Error && error.message === 'Authentication required') {
+        if (onLoginClick) {
+          onLoginClick();
+        }
+      } else {
+        console.error('Error handling like:', error);
+      }
+    }
+  };
+
+  // Handle dislike button click
+  const handleDislike = async () => {
+    if (!isAuthenticated) {
+      if (onLoginClick) {
+        onLoginClick();
+      }
+      return;
+    }
+
+    try {
+      const result = await viewService.dislikeVideo(video.id);
+      setLocalLikes(result.likes);
+      setLocalDislikes(result.dislikes);
+      setUserReaction(result.userReaction === 'like' ? 'like' : result.userReaction === 'dislike' ? 'dislike' : null);
+    } catch (error) {
+      if (error instanceof Error && error.message === 'Authentication required') {
+        if (onLoginClick) {
+          onLoginClick();
+        }
+      } else {
+        console.error('Error handling dislike:', error);
+      }
     }
   };
 
@@ -140,6 +309,32 @@ const VideoPlayer = ({
       }
     };
   }, [video.id]);
+
+  // Increment view count when video starts playing
+  useEffect(() => {
+    const videoElement = videoRef.current;
+    if (!videoElement) return;
+
+    const handleFirstPlay = async () => {
+      if (!viewCounted) {
+        setViewCounted(true);
+        try {
+          const result = await viewService.incrementView(video.id);
+          setLocalViews(result.views);
+        } catch (error) {
+          console.error('Error incrementing view count:', error);
+          // Still update locally even if API fails
+          setLocalViews((prev) => prev + 1);
+        }
+      }
+    };
+
+    videoElement.addEventListener('play', handleFirstPlay);
+
+    return () => {
+      videoElement.removeEventListener('play', handleFirstPlay);
+    };
+  }, [video.id, viewCounted]);
 
   // Handle autoplay when countdown reaches 0
   useEffect(() => {
@@ -405,21 +600,115 @@ const VideoPlayer = ({
     <div className="video-player-container">
       <div className="video-player-main">
         <div className="video-player">
-          <div className="video-player-wrapper">
+          <div
+            className="video-player-wrapper"
+            onMouseMove={resetControlsTimeout}
+            onMouseLeave={() => setShowControls(false)}
+          >
             <video
               ref={videoRef}
-              controls
               autoPlay
               width="100%"
               height="auto"
               src={`http://localhost:8080/media/${video.filename || video.id + '.mp4'}`}
               poster={`http://localhost:8080/media/${video.filename ? video.filename.replace('.mp4', '.webp') : video.id + '.webp'}`}
               className="video-element"
-              onMouseMove={handleMouseMove}
-              onMouseLeave={handleMouseLeave}
+              onClick={handlePlayPause}
             >
               Tu navegador no soporta la reproducción de video.
             </video>
+
+            {/* Top controls - Mute, Fullscreen, Playback speed */}
+            <div className={`video-top-controls ${showControls ? 'visible' : ''}`}>
+              <button
+                className="control-button"
+                onClick={handleMuteToggle}
+                title={isMuted ? 'Activar sonido' : 'Silenciar'}
+              >
+                <svg viewBox="0 0 24 24" className="control-icon">
+                  {isMuted ? (
+                    <path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z" />
+                  ) : (
+                    <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z" />
+                  )}
+                </svg>
+              </button>
+              <button className="control-button" onClick={handleFullscreen} title="Pantalla completa">
+                <svg viewBox="0 0 24 24" className="control-icon">
+                  <path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z" />
+                </svg>
+              </button>
+              <div className="speed-control">
+                <button
+                  className="control-button speed-button"
+                  onClick={() => setShowSpeedMenu(!showSpeedMenu)}
+                  title="Velocidad de reproducción"
+                >
+                  <span className="speed-text">{playbackSpeed}x</span>
+                </button>
+                {showSpeedMenu && (
+                  <div className="speed-menu">
+                    {[0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2].map((speed) => (
+                      <button
+                        key={speed}
+                        className={`speed-option ${playbackSpeed === speed ? 'active' : ''}`}
+                        onClick={() => handleSpeedChange(speed)}
+                      >
+                        {speed}x
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Bottom controls - Play/Pause and Progress bar */}
+            <div className={`video-bottom-controls ${showControls ? 'visible' : ''}`}>
+              <div className="controls-row">
+                <button className="control-button play-pause-btn" onClick={handlePlayPause}>
+                  <svg viewBox="0 0 24 24" className="control-icon">
+                    {isPlaying ? <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" /> : <path d="M8 5v14l11-7z" />}
+                  </svg>
+                </button>
+                <span className="time-display">
+                  {formatTime(currentTime)} / {formatTime(duration)}
+                </span>
+                <div
+                  className="progress-container"
+                  onMouseMove={(e) => {
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    const wrapperRect = e.currentTarget.closest('.video-player-wrapper')?.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const percentage = Math.max(0, Math.min(1, x / rect.width));
+                    const time = percentage * duration;
+
+                    if (!isNaN(time) && wrapperRect) {
+                      setPreviewTime(time);
+                      // Position relative to the wrapper, centered on mouse X position within wrapper
+                      const xRelativeToWrapper = e.clientX - wrapperRect.left;
+                      const yRelativeToWrapper = rect.top - wrapperRect.top - 130;
+                      setPreviewPosition({ x: xRelativeToWrapper, y: yRelativeToWrapper });
+
+                      if (previewVideoRef.current) {
+                        previewVideoRef.current.currentTime = time;
+                      }
+                    }
+                  }}
+                  onMouseLeave={() => setPreviewTime(null)}
+                >
+                  <div className="progress-filled" style={{ width: `${(currentTime / duration) * 100}%` }} />
+                  <input
+                    type="range"
+                    className="progress-bar"
+                    min="0"
+                    max={duration || 0}
+                    value={currentTime}
+                    onChange={handleProgressChange}
+                    step="0.1"
+                  />
+                </div>
+              </div>
+            </div>
 
             {/* Video preview tooltip */}
             {previewTime !== null && (
@@ -499,37 +788,24 @@ const VideoPlayer = ({
 
           <div className="video-stats">
             <div className="video-stats-left">
-              <span className="video-views-large">{formatViews(video.views)}</span>
+              <span className="video-views-large">{formatViews(localViews)}</span>
               <span className="video-separator">•</span>
               <span className="video-date">{getUploadTime(video.id)}</span>
             </div>
 
             <div className="video-actions">
-              <button className="action-button">
+              <button className={`action-button ${userReaction === 'like' ? 'active' : ''}`} onClick={handleLike}>
                 <svg viewBox="0 0 24 24" className="action-icon">
                   <path d="M1 21h4V9H1v12zm22-11c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2z" />
                 </svg>
-                {getLikes(video.likes)}
+                {getLikes(localLikes)}
               </button>
 
-              <button className="action-button">
+              <button className={`action-button ${userReaction === 'dislike' ? 'active' : ''}`} onClick={handleDislike}>
                 <svg viewBox="0 0 24 24" className="action-icon">
                   <path d="M15 3H6c-.83 0-1.54.5-1.84 1.22l-3.02 7.05c-.09.23-.14.47-.14.73v2c0 1.1.9 2 2 2h6.31l-.95 4.57-.03.32c0 .41.17.79.44 1.06L9.83 23l6.59-6.59c.36-.36.58-.86.58-1.41V5c0-1.1-.9-2-2-2z" />
                 </svg>
-              </button>
-
-              <button className="action-button">
-                <svg viewBox="0 0 24 24" className="action-icon">
-                  <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.50-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z" />
-                </svg>
-                Compartir
-              </button>
-
-              <button className="action-button">
-                <svg viewBox="0 0 24 24" className="action-icon">
-                  <path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z" />
-                </svg>
-                Guardar
+                {localDislikes > 0 ? getLikes(localDislikes) : ''}
               </button>
             </div>
           </div>
@@ -544,14 +820,13 @@ const VideoPlayer = ({
                 </p>
               </div>
             </div>
-            <button className="subscribe-button">Suscribirse</button>
           </div>
 
           {video.description && (
             <div className="description-section">
               <div className={`description-content ${showFullDescription ? 'expanded' : ''}`}>
                 <div className="description-metadata">
-                  <span>{formatViews(video.views)}</span>
+                  <span>{formatViews(localViews)}</span>
                   <span>•</span>
                   <span>{getUploadTime(video.id)}</span>
                 </div>
