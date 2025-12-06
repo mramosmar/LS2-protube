@@ -97,6 +97,10 @@ const VideoPlayer = ({
         setLocalDislikes(video.dislikes || 0);
         setUserReaction(null);
       }
+    };
+
+    loadReaction();
+
     const videoElement = videoRef.current;
     if (!videoElement) return;
 
