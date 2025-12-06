@@ -62,9 +62,11 @@ function App() {
     const params = new URLSearchParams(location.search);
     const token = params.get('token');
     if (token) {
-      handleOAuth2LoginSuccess();
+      handleOAuth2LoginSuccess(token);
+      // Clean up URL by removing the token parameter
+      navigate('/', { replace: true });
     }
-  }, [location]);
+  }, [location, navigate]);
   // Handler for search
   const handleSearchChange = (term: string) => {
     setSearchTerm(term);
@@ -168,11 +170,33 @@ function App() {
       return Promise.reject(error);
     }
   );
-  const handleOAuth2LoginSuccess = () => {
-    setIsAuthenticated(true);
-    const user = authService.getCurrentUser();
-    if (user) {
-      setCurrentUser({ username: user.username });
+  const handleOAuth2LoginSuccess = async (token: string) => {
+    // Save the token to localStorage (both keys for compatibility)
+    localStorage.setItem('protube_token', token);
+    localStorage.setItem('authToken', token);
+
+    try {
+      // Fetch user info from backend using the token
+      const response = await fetch('http://localhost:8080/api/users/me', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const userData = await response.json();
+        localStorage.setItem('protube_user', JSON.stringify(userData));
+        setIsAuthenticated(true);
+        setCurrentUser({ username: userData.username });
+      } else {
+        // If we can't get user info, at least set authenticated with token
+        setIsAuthenticated(true);
+        setCurrentUser({ username: 'User' });
+      }
+    } catch (error) {
+      console.error('Error fetching user info:', error);
+      setIsAuthenticated(true);
+      setCurrentUser({ username: 'User' });
     }
   };
 
