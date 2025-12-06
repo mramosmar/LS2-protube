@@ -47,9 +47,18 @@ const VideoPlayer = ({
   const [localDislikes, setLocalDislikes] = useState(video.dislikes || 0);
   const [userReaction, setUserReaction] = useState<'like' | 'dislike' | null>(null);
   const [viewCounted, setViewCounted] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(true);
+  const [isMuted, setIsMuted] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [showControls, setShowControls] = useState(true);
+  const [volume, setVolume] = useState(1);
+  const [playbackSpeed, setPlaybackSpeed] = useState(1);
+  const [showSpeedMenu, setShowSpeedMenu] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const previewVideoRef = useRef<HTMLVideoElement>(null);
   const countdownIntervalRef = useRef<any>(null);
+  const controlsTimeoutRef = useRef<any>(null);
 
   // Cleanup countdown on unmount or video change
   useEffect(() => {
@@ -61,14 +70,20 @@ const VideoPlayer = ({
     setCommentError(null);
     setLocalViews(video.views);
     setViewCounted(false);
+    setIsPlaying(true);
+    setCurrentTime(0);
+    setDuration(0);
     return () => {
       if (countdownIntervalRef.current) {
         clearInterval(countdownIntervalRef.current);
       }
+      if (controlsTimeoutRef.current) {
+        clearTimeout(controlsTimeoutRef.current);
+      }
     };
   }, [video.id]);
 
-  // Load reaction state when video changes
+  // Update time and duration
   useEffect(() => {
     const loadReaction = async () => {
       try {
@@ -82,9 +97,83 @@ const VideoPlayer = ({
         setLocalDislikes(video.dislikes || 0);
         setUserReaction(null);
       }
+    const videoElement = videoRef.current;
+    if (!videoElement) return;
+
+    const updateTime = () => setCurrentTime(videoElement.currentTime);
+    const updateDuration = () => setDuration(videoElement.duration);
+    const handlePlayState = () => setIsPlaying(!videoElement.paused);
+
+    videoElement.addEventListener('timeupdate', updateTime);
+    videoElement.addEventListener('loadedmetadata', updateDuration);
+    videoElement.addEventListener('play', handlePlayState);
+    videoElement.addEventListener('pause', handlePlayState);
+
+    return () => {
+      videoElement.removeEventListener('timeupdate', updateTime);
+      videoElement.removeEventListener('loadedmetadata', updateDuration);
+      videoElement.removeEventListener('play', handlePlayState);
+      videoElement.removeEventListener('pause', handlePlayState);
     };
-    loadReaction();
-  }, [video.id, video.likes, video.dislikes]);
+  }, [video.id]);
+
+  // Auto-hide controls
+  const resetControlsTimeout = () => {
+    setShowControls(true);
+    if (controlsTimeoutRef.current) {
+      clearTimeout(controlsTimeoutRef.current);
+    }
+    if (isPlaying) {
+      controlsTimeoutRef.current = setTimeout(() => {
+        setShowControls(false);
+      }, 3000);
+    }
+  };
+
+  const handlePlayPause = () => {
+    if (videoRef.current) {
+      if (isPlaying) {
+        videoRef.current.pause();
+      } else {
+        videoRef.current.play();
+      }
+      setIsPlaying(!isPlaying);
+    }
+  };
+
+  const handleMuteToggle = () => {
+    if (videoRef.current) {
+      videoRef.current.muted = !isMuted;
+      setIsMuted(!isMuted);
+    }
+  };
+
+  const handleFullscreen = () => {
+    const videoContainer = videoRef.current?.parentElement;
+    if (videoContainer) {
+      if (!document.fullscreenElement) {
+        videoContainer.requestFullscreen();
+      } else {
+        document.exitFullscreen();
+      }
+    }
+  };
+
+  const handleProgressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newTime = parseFloat(e.target.value);
+    if (videoRef.current) {
+      videoRef.current.currentTime = newTime;
+      setCurrentTime(newTime);
+    }
+  };
+
+  const handleSpeedChange = (speed: number) => {
+    if (videoRef.current) {
+      videoRef.current.playbackRate = speed;
+      setPlaybackSpeed(speed);
+      setShowSpeedMenu(false);
+    }
+  };
 
   // Handle comment submission
   const handleSubmitComment = async (e: React.FormEvent) => {
@@ -507,21 +596,114 @@ const VideoPlayer = ({
     <div className="video-player-container">
       <div className="video-player-main">
         <div className="video-player">
-          <div className="video-player-wrapper">
+          <div
+            className="video-player-wrapper"
+            onMouseMove={resetControlsTimeout}
+            onMouseLeave={() => setShowControls(false)}
+          >
             <video
               ref={videoRef}
-              controls
               autoPlay
               width="100%"
               height="auto"
               src={`http://localhost:8080/media/${video.filename || video.id + '.mp4'}`}
               poster={`http://localhost:8080/media/${video.filename ? video.filename.replace('.mp4', '.webp') : video.id + '.webp'}`}
               className="video-element"
-              onMouseMove={handleMouseMove}
-              onMouseLeave={handleMouseLeave}
+              onClick={handlePlayPause}
             >
               Tu navegador no soporta la reproducción de video.
             </video>
+
+            {/* Top controls - Mute, Fullscreen, Playback speed */}
+            <div className={`video-top-controls ${showControls ? 'visible' : ''}`}>
+              <button className="control-button" onClick={handleMuteToggle} title={isMuted ? "Activar sonido" : "Silenciar"}>
+                <svg viewBox="0 0 24 24" className="control-icon">
+                  {isMuted ? (
+                    <path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z" />
+                  ) : (
+                    <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z" />
+                  )}
+                </svg>
+              </button>
+              <button className="control-button" onClick={handleFullscreen} title="Pantalla completa">
+                <svg viewBox="0 0 24 24" className="control-icon">
+                  <path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z" />
+                </svg>
+              </button>
+              <div className="speed-control">
+                <button
+                  className="control-button speed-button"
+                  onClick={() => setShowSpeedMenu(!showSpeedMenu)}
+                  title="Velocidad de reproducción"
+                >
+                  <span className="speed-text">{playbackSpeed}x</span>
+                </button>
+                {showSpeedMenu && (
+                  <div className="speed-menu">
+                    {[0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2].map((speed) => (
+                      <button
+                        key={speed}
+                        className={`speed-option ${playbackSpeed === speed ? 'active' : ''}`}
+                        onClick={() => handleSpeedChange(speed)}
+                      >
+                        {speed}x
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Bottom controls - Play/Pause and Progress bar */}
+            <div className={`video-bottom-controls ${showControls ? 'visible' : ''}`}>
+              <div className="controls-row">
+                <button className="control-button play-pause-btn" onClick={handlePlayPause}>
+                  <svg viewBox="0 0 24 24" className="control-icon">
+                    {isPlaying ? (
+                      <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
+                    ) : (
+                      <path d="M8 5v14l11-7z" />
+                    )}
+                  </svg>
+                </button>
+                <span className="time-display">
+                  {formatTime(currentTime)} / {formatTime(duration)}
+                </span>
+                <div
+                  className="progress-container"
+                  onMouseMove={(e) => {
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const percentage = Math.max(0, Math.min(1, x / rect.width));
+                    const time = percentage * duration;
+
+                    if (!isNaN(time)) {
+                      setPreviewTime(time);
+                      setPreviewPosition({ x: e.clientX, y: rect.top });
+
+                      if (previewVideoRef.current) {
+                        previewVideoRef.current.currentTime = time;
+                      }
+                    }
+                  }}
+                  onMouseLeave={() => setPreviewTime(null)}
+                >
+                  <div
+                    className="progress-filled"
+                    style={{ width: `${(currentTime / duration) * 100}%` }}
+                  />
+                  <input
+                    type="range"
+                    className="progress-bar"
+                    min="0"
+                    max={duration || 0}
+                    value={currentTime}
+                    onChange={handleProgressChange}
+                    step="0.1"
+                  />
+                </div>
+              </div>
+            </div>
 
             {/* Video preview tooltip */}
             {previewTime !== null && (
