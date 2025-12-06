@@ -54,9 +54,7 @@ describe('viewService', () => {
         ok: false,
       });
 
-      await expect(viewService.incrementView(1)).rejects.toThrow(
-        'Failed to increment view count'
-      );
+      await expect(viewService.incrementView(1)).rejects.toThrow('Failed to increment view count');
     });
 
     test('throws error and logs when network error occurs', async () => {
@@ -216,4 +214,3 @@ describe('viewService', () => {
     });
   });
 });
-

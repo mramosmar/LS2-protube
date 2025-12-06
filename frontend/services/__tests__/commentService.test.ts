@@ -61,9 +61,7 @@ describe('commentService', () => {
         json: () => Promise.resolve({ error: 'Comment too long' }),
       });
 
-      await expect(commentService.addComment(1, 'Test comment')).rejects.toThrow(
-        'Comment too long'
-      );
+      await expect(commentService.addComment(1, 'Test comment')).rejects.toThrow('Comment too long');
     });
 
     test('throws default error message when API returns error without message', async () => {
@@ -74,10 +72,7 @@ describe('commentService', () => {
         json: () => Promise.resolve({}),
       });
 
-      await expect(commentService.addComment(1, 'Test comment')).rejects.toThrow(
-        'Failed to add comment'
-      );
+      await expect(commentService.addComment(1, 'Test comment')).rejects.toThrow('Failed to add comment');
     });
   });
 });
-
