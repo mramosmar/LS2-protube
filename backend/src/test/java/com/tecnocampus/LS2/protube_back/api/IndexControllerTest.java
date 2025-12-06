@@ -9,13 +9,11 @@ class IndexControllerTest {
 
     @Test
     void home() {
-
-        assertEquals("index", indexController.home().getViewName());
+        assertEquals("index", indexController.home());
     }
 
     @Test
     void logout() {
-
-        assertEquals("logout", indexController.logout().getViewName());
+        assertEquals("logout", indexController.logout());
     }
 }

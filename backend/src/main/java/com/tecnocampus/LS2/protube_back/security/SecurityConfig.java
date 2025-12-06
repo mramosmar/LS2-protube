@@ -86,7 +86,7 @@ public class SecurityConfig {
                             String token = jwtTokenProvider.generateToken(email);
 
                             // Redirect to frontend with token
-                            response.sendRedirect("http://localhost:5173?token=" + token);
+                            response.sendRedirect("http://localhost:8080?token=" + token);
                         })
                         .failureUrl("/login?error=true")
                 )
