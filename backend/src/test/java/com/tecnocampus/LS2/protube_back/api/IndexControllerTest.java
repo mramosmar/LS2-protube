@@ -9,7 +9,12 @@ class IndexControllerTest {
 
     @Test
     void home() {
-        assertEquals("index", indexController.home());
+        assertEquals("forward:/index.html", indexController.home());
+    }
+
+    @Test
+    void forwardVideoRoutes() {
+        assertEquals("forward:/index.html", indexController.forwardVideoRoutes());
     }
 
     @Test
