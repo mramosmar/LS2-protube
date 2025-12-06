@@ -620,7 +620,11 @@ const VideoPlayer = ({
 
             {/* Top controls - Mute, Fullscreen, Playback speed */}
             <div className={`video-top-controls ${showControls ? 'visible' : ''}`}>
-              <button className="control-button" onClick={handleMuteToggle} title={isMuted ? "Activar sonido" : "Silenciar"}>
+              <button
+                className="control-button"
+                onClick={handleMuteToggle}
+                title={isMuted ? 'Activar sonido' : 'Silenciar'}
+              >
                 <svg viewBox="0 0 24 24" className="control-icon">
                   {isMuted ? (
                     <path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z" />
@@ -663,11 +667,7 @@ const VideoPlayer = ({
               <div className="controls-row">
                 <button className="control-button play-pause-btn" onClick={handlePlayPause}>
                   <svg viewBox="0 0 24 24" className="control-icon">
-                    {isPlaying ? (
-                      <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
-                    ) : (
-                      <path d="M8 5v14l11-7z" />
-                    )}
+                    {isPlaying ? <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" /> : <path d="M8 5v14l11-7z" />}
                   </svg>
                 </button>
                 <span className="time-display">
@@ -677,13 +677,17 @@ const VideoPlayer = ({
                   className="progress-container"
                   onMouseMove={(e) => {
                     const rect = e.currentTarget.getBoundingClientRect();
+                    const wrapperRect = e.currentTarget.closest('.video-player-wrapper')?.getBoundingClientRect();
                     const x = e.clientX - rect.left;
                     const percentage = Math.max(0, Math.min(1, x / rect.width));
                     const time = percentage * duration;
 
-                    if (!isNaN(time)) {
+                    if (!isNaN(time) && wrapperRect) {
                       setPreviewTime(time);
-                      setPreviewPosition({ x: e.clientX, y: rect.top });
+                      // Position relative to the wrapper, centered on mouse X position within wrapper
+                      const xRelativeToWrapper = e.clientX - wrapperRect.left;
+                      const yRelativeToWrapper = rect.top - wrapperRect.top - 130;
+                      setPreviewPosition({ x: xRelativeToWrapper, y: yRelativeToWrapper });
 
                       if (previewVideoRef.current) {
                         previewVideoRef.current.currentTime = time;
@@ -692,10 +696,7 @@ const VideoPlayer = ({
                   }}
                   onMouseLeave={() => setPreviewTime(null)}
                 >
-                  <div
-                    className="progress-filled"
-                    style={{ width: `${(currentTime / duration) * 100}%` }}
-                  />
+                  <div className="progress-filled" style={{ width: `${(currentTime / duration) * 100}%` }} />
                   <input
                     type="range"
                     className="progress-bar"
