@@ -2,6 +2,7 @@ package com.tecnocampus.LS2.protube_back.api;
 
 import com.tecnocampus.LS2.protube_back.application.UserService;
 import com.tecnocampus.LS2.protube_back.application.dto.UserDTO;
+import com.tecnocampus.LS2.protube_back.Persistance.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockitoAnnotations;
@@ -19,12 +20,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class UserRestControllerTest {
     private MockMvc mockMvc;
     private UserService userService;
+    private UserRepository userRepository;
 
     @BeforeEach
     void setup() {
         MockitoAnnotations.openMocks(this);
         userService = mock(UserService.class);
-        UserRestController controller = new UserRestController(userService);
+        userRepository = mock(UserRepository.class);
+        UserRestController controller = new UserRestController(userService, userRepository);
         mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
     }
 
